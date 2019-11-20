@@ -21,8 +21,8 @@ public class AC2001 extends Constraint {
         ArrayList<int[]> tab = table.getTable();
         for(int i = 0; i < tab.size(); i++){
             int[] t = tab.get(i);
-            if(!xSupport.containsKey(t[0])) xSupport.put(t[0], new int[]{t[1], i});
-            if(!ySupport.containsKey(t[1])) ySupport.put(t[1], new int[]{t[0], i});
+            if(!xSupport.containsKey(t[0])) xSupport.put(t[0], new int[]{t[1], y.indexOf(t[1])});
+            if(!ySupport.containsKey(t[1])) ySupport.put(t[1], new int[]{t[0], x.indexOf(t[0])});
         }
     }
 

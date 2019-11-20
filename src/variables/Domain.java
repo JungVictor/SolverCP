@@ -98,9 +98,8 @@ public class Domain {
         return !this.domain.isEmpty();
     }
 
-    private int getIndex(int v){
-        for(int i = 0; i < this.domain.size(); i++) if(v == this.domain.get(i)) return i;
-        return -1;
+    public int getIndex(int v){
+        return domain.indexOf(v);
     }
 
     /**

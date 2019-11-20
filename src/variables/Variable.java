@@ -164,6 +164,10 @@ public class Variable implements Comparable<Variable>{
         return domain[depth];
     }
 
+    public int indexOf(int value){
+        return this.getDomain().getIndex(value);
+    }
+
     public void initDomains(int N){
         depth = 0;
         this.domain = new Domain[N];

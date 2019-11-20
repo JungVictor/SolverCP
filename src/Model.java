@@ -119,6 +119,10 @@ public class Model {
         addConstraint(x, y, new Table(x, op, y, op2, cons), defaultFilter);
     }
 
+    public void addConstraint(Variable x, String op, int const1, String op2, Variable y, String op3, int const2){
+        addConstraint(x, y, new Table(x, op, const1, op2, y, op3, const2), defaultFilter);
+    }
+
     public void addConstraint(Variable x, Variable y, Table table){
         addConstraint(x, y, table, defaultFilter);
     }

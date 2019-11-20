@@ -17,12 +17,17 @@ public class Table {
 
     public Table(Variable x, String op, Variable y){
         this();
-        compare(x, op, y, "+", 0);
+        compare(x, "+", 0, op, y, "+", 0);
     }
 
     public Table(Variable x, String op, Variable y, String op2, int cons){
         this();
-        compare(x, op, y, op2, cons);
+        compare(x, "+", 0, op, y, op2, cons);
+    }
+
+    public Table(Variable x, String op, int cons1, String op2, Variable y, String op3, int cons2){
+        this();
+        compare(x, op, cons1, op2, y, op3, cons2);
     }
 
     public Table(){
@@ -56,24 +61,31 @@ public class Table {
         return false;
     }
 
-    private boolean check(int xVal, String op, int yVal, String op2, int cons){
-        int left = 0, right = 0;
+    private int eval(int v1, String op, int v2){
+        if (op.equals("*")) return v1 * v2;
+        else if (op.equals("/")) return v1 / v2;
+        else if (op.equals("+")) return v1 + v2;
+        else return v1 - v2;
+    }
+
+    private boolean check(int xVal, String op, int cons1, String op2, int yVal, String op3, int cons2){
+        int left, right;
         String compare;
 
-        if(in(op, ARITH_OP)) {
-            right = cons;
-            compare = op2;
-            if (op.equals("*")) left = xVal * yVal;
-            else if (op.equals("/")) left = xVal / yVal;
-            else if (op.equals("+")) left = xVal + yVal;
-            else if (op.equals("-")) left = xVal - yVal;
-        } else {
-            left = xVal;
+        if(in(op, COMP_OP)){
             compare = op;
-            if (op2.equals("*")) right = yVal * cons;
-            else if (op2.equals("/")) right = yVal / cons;
-            else if (op2.equals("+")) right = yVal + cons;
-            else if (op2.equals("-")) right = yVal - cons;
+            left = xVal;
+            if(op3.equals("+") || op3.equals("-")) right = eval(eval(cons1, op2, yVal), op3, cons2);
+            else right = eval(cons1, op2, eval(yVal, op3, cons2));
+        } else if(in(op2, COMP_OP)){
+            compare = op2;
+            left = eval(xVal, op, cons1);
+            right = eval(yVal, op3, cons2);
+        } else {
+            compare = op3;
+            if(op2.equals("+") || op2.equals("-")) left = eval(eval(xVal, op, cons1), op2, yVal);
+            else left = eval(xVal, op, eval(cons1, op2, yVal));
+            right = cons2;
         }
 
         if(compare.equals("<")) return left < right;
@@ -86,11 +98,11 @@ public class Table {
         return false;
     }
 
-    private void compare(Variable x, String op, Variable y, String op2, int cons){
+    private void compare(Variable x, String op, int cons1, String op2, Variable y, String op3, int cons2){
         ArrayList<Integer> xValues = x.getDomain().getValues();
         ArrayList<Integer> yValues = y.getDomain().getValues();
 
-        for(int xVal : xValues) for(int yVal : yValues) if(check(xVal, op, yVal, op2, cons)) addToTable(xVal, yVal);
+        for(int xVal : xValues) for(int yVal : yValues) if(check(xVal, op, cons1, op2, yVal, op3, cons2)) addToTable(xVal, yVal);
 
         computeHashTable();
     }

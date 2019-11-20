@@ -1,66 +1,41 @@
 package constraint;
 
+import variables.SupportList;
 import variables.Variable;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-
-import static java.lang.Integer.valueOf;
+import java.util.Collection;
 
 public class AC4 extends Constraint {
 
-    private ArrayList<HashMap<Integer, ArrayList<Integer>>> xSupports, ySupports;
-    private HashMap<Integer, ArrayList<Integer>> xSupport, ySupport;
+    private SupportList xSupports, ySupports;
 
     public AC4(Variable x, Variable y, Table table) {
         super(x, y, table);
 
-        xSupports = new ArrayList<>();
-        ySupports = new ArrayList<>();
-
-        xSupport = new HashMap<>();
-        ySupport = new HashMap<>();
+        xSupports = new SupportList();
+        ySupports = new SupportList();
 
         computeSupports();
     }
 
-    private void restore(){
-        xSupport = copy(xSupports.get(index));
-        ySupport = copy(ySupports.get(index));
-    }
-
     @Override
     public void setIndex(int index) {
-        if(this.index < index) {
-            this.index = index;
-            xSupports.add(index, copy(xSupport));
-            ySupports.add(index, copy(ySupport));
-        } else {
-            this.index = index;
-            this.restore();
-        }
-    }
-
-    private HashMap<Integer, ArrayList<Integer>> copy(HashMap<Integer, ArrayList<Integer>> support){
-        HashMap<Integer, ArrayList<Integer>> copy = new HashMap<>();
-        for(int key : support.keySet()) copy.put(key, new ArrayList<>(support.get(key)));
-        return copy;
+        xSupports.setIndex(index);
+        ySupports.setIndex(index);
     }
 
     private void computeSupports(){
         ArrayList<int[]> tab = table.getTable();
 
-        for(int i = 0; i < x.getDomainSize(); i++) xSupport.put(x.getDomainValue(i), new ArrayList<>());
-        for(int i = 0; i < y.getDomainSize(); i++) ySupport.put(y.getDomainValue(i), new ArrayList<>());
+        for(int i = 0; i < x.getDomainSize(); i++) xSupports.addKey(x.getDomainValue(i));
+        for(int i = 0; i < y.getDomainSize(); i++) ySupports.addKey(y.getDomainValue(i));
 
         for(int i = 0; i < tab.size(); i++){
             int[] t = tab.get(i);
-            xSupport.get(t[0]).add(t[1]);
-            ySupport.get(t[1]).add(t[0]);
+            xSupports.put(t[0], t[1]);
+            ySupports.put(t[1], t[0]);
         }
-
-        xSupports.add(0, copy(xSupport));
-        ySupports.add(0, copy(ySupport));
     }
 
 
@@ -69,16 +44,16 @@ public class AC4 extends Constraint {
         Variable v2;
         ArrayList<Integer> removed = v.getDeltaValues();
 
-        HashMap<Integer, ArrayList<Integer>> vSupport, v2Support;
+        SupportList vSupport, v2Support;
         if(v == x){
             v2 = y;
-            vSupport = xSupport;
-            v2Support = ySupport;
+            vSupport = xSupports;
+            v2Support = ySupports;
         }
         else{
             v2 = x;
-            vSupport = ySupport;
-            v2Support = xSupport;
+            vSupport = ySupports;
+            v2Support = xSupports;
         }
         if(removed.isEmpty()) return !v2.isDomainEmpty();
 
@@ -86,14 +61,12 @@ public class AC4 extends Constraint {
         // Pour chaque valeur retirée de v
         for(int rem : removed){
             // Toutes les valeurs supportées par rem
-            ArrayList<Integer> supported = vSupport.get(rem);
-            vSupport.put(rem, new ArrayList<>());
+            Collection<Integer> supported = vSupport.getSupports(rem);
             // Pour chaque valeur supportée
             for(int s : supported){
-                // On retire rem de la liste des supports
-                v2Support.get(s).remove(valueOf(rem));
+                int index = v2Support.indexOf(s, rem);
                 // S'il n'y a plus de support, on retire la valeur
-                if(v2Support.get(s).isEmpty()) v2.removeValue(s);
+                if(index >= 0 && v2Support.remove(s, index)) v2.removeValue(s);
             }
         }
 

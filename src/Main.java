@@ -6,7 +6,7 @@ public class Main {
     public static void main(String[] args){
         Model model = new Model();
 
-        int N = 14;
+        int N = 12;
 
         Variable[] queens = model.addVariables(N, 1, N);
 
@@ -18,7 +18,7 @@ public class Main {
             }
         }
 
-        model.setDefaultFilter(Constraint.AC2001);
+        model.setDefaultFilter(Constraint.AC4);
         model.lookingForSolution(0);
         model.setDebugMode(false);
 

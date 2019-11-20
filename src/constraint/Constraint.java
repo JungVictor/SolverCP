@@ -4,7 +4,6 @@ import variables.Variable;
 public abstract class Constraint {
 
     public static final String AC3 = "AC3", AC4 = "AC4", AC6 = "AC6", AC2001 = "AC2001";
-    public static final String LT = "<";
 
     protected Variable x, y;
     protected Table table;
