@@ -1,4 +1,6 @@
 package constraint;
+import constraint.expressions.Expression;
+import constraint.expressions.ExpressionParser;
 import variables.Variable;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -14,6 +16,17 @@ public class Table {
     /********************
      * CREATING A TABLE *
      ********************/
+
+    public Table(Expression expr, Variable x, Variable y){
+        this();
+        computeTuples(expr, x, y);
+    }
+
+    private ExpressionParser parser = new ExpressionParser();
+    public Table(String expr, Variable x, Variable y){
+        this();
+        computeTuples(parser.parse(expr), x, y);
+    }
 
     public Table(Variable x, String op, Variable y){
         this();
@@ -44,7 +57,7 @@ public class Table {
         add(tuples);
     }
 
-    private void computeHashTable(){
+    public void computeHashTable(){
         this.xTable = new HashMap<>();
         for(int[] t : table){
             if(!xTable.containsKey(t[0])) xTable.put(t[0], new ArrayList<>());
@@ -67,6 +80,8 @@ public class Table {
         else if (op.equals("+")) return v1 + v2;
         else return v1 - v2;
     }
+
+
 
     private boolean check(int xVal, String op, int cons1, String op2, int yVal, String op3, int cons2){
         int left, right;
@@ -107,6 +122,14 @@ public class Table {
         computeHashTable();
     }
 
+    private void computeTuples(Expression expr, Variable x, Variable y){
+        ArrayList<Integer> xValues = x.getDomain().getValues();
+        ArrayList<Integer> yValues = y.getDomain().getValues();
+
+        for(int xVal : xValues) for(int yVal : yValues) if(expr.eval(xVal, yVal)) addToTable(xVal, yVal);
+        computeHashTable();
+    }
+
     /***********************
      * OPERATION ON TABLES *
      ***********************/
@@ -124,6 +147,13 @@ public class Table {
         return res;
     }
 
+    public Table union(Table t){
+        Table res = new Table();
+        res.add(this.getTable());
+        res.add(t.getTable());
+        res.computeHashTable();
+        return res;
+    }
 
     /*******************************
      * ADD AN ELEMENT TO THE TABLE *
@@ -131,6 +161,7 @@ public class Table {
 
     public void add(ArrayList<int[]> tables){
         this.table.addAll(tables);
+        computeHashTable();
     }
 
     public void add(int[] tuple){
@@ -139,6 +170,7 @@ public class Table {
 
     public void add(int[][] table){
         for(int[] tuple : table) add(tuple);
+        computeHashTable();
     }
 
     public void add(int x, int y){
