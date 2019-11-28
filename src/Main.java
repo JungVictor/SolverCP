@@ -9,7 +9,7 @@ public class Main {
 
         Model model = new Model();
 
-        int N = 14;
+        int N = 12;
 
         Variable[] queens = model.addVariables(N, 1, N);
 
@@ -22,13 +22,14 @@ public class Main {
                 //model.addConstraint(queens[i], "!=", queens[j], "-", (j-i));
             }
         }
-
         model.setDefaultFilter(Constraint.AC3);
         model.lookingForSolution(0);
         model.setDebugMode(false);
         model.solve();
 
         System.out.print(model.stats());
+
+
     }
 
 }

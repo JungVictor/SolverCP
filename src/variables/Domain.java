@@ -7,6 +7,9 @@ import java.util.Random;
 public class Domain {
 
     private ArrayList<Integer> domain;
+    private LinkedList<Integer> removed;
+    private ArrayList<Integer> toPop;
+    private int index, maxIndex;
 
     public String toString(){
         if(domain.isEmpty()) return "{}";
@@ -23,6 +26,10 @@ public class Domain {
 
     public Domain(){
         this.domain = new ArrayList<>();
+        this.removed = new LinkedList<>();
+        this.toPop = new ArrayList<>();
+        this.index = -1;
+        this.maxIndex = -1;
     }
 
     public Domain(int v){
@@ -88,6 +95,24 @@ public class Domain {
         return this.domain.contains(a);
     }
 
+    public void restore(int index) {
+        int nPop = 0;
+        for (int i = this.index; i >= index; i--) {
+            nPop += this.toPop.get(i);
+            this.toPop.set(i, 0);
+        }
+        for (int i = 0; i < nPop; i++) domain.add(removed.pop());
+    }
+
+    public void setIndex(int index){
+        if(index > maxIndex){
+            maxIndex = index;
+            toPop.add(0);
+        } else if (this.index < index) toPop.set(index, 0);
+        else restore(index);
+        this.index = index;
+    }
+
     /**
      * Remove an element from the domain
      * @param a element
@@ -95,7 +120,11 @@ public class Domain {
      */
     public boolean remove(int a){
         int index = getIndex(a);
-        if(index >= 0) this.domain.remove(index);
+        if(index >= 0) {
+            this.domain.remove(index);
+            this.removed.push(a);
+            this.toPop.set(this.index, this.toPop.get(this.index)+1);
+        }
         return !this.domain.isEmpty();
     }
 

@@ -7,8 +7,7 @@ import java.util.ArrayList;
 public class Variable implements Comparable<Variable>{
 
     // Domaine de la variable : toutes les valeurs possibles pour cette variable
-    private Domain[] domain;
-    private Domain originalDomain;
+    private Domain domain;
 
     // Delta de la variable : toutes les valeurs retirées du domaine entre deux filtrages
     private int depth = -1;
@@ -24,12 +23,12 @@ public class Variable implements Comparable<Variable>{
     private ArrayList<Integer> tested;
 
     public String toString_(){
-        String dom = "DOMAIN = " + domain[depth].toString() + "; DELTA = " + delta.toString();
+        String dom = "DOMAIN = " + domain.toString() + "; DELTA = " + delta.toString();
         return dom;
     }
 
     public Variable(Domain domain, Propagation propagation){
-        this.originalDomain = domain;
+        this.domain = domain.copy();
         this.delta = new Delta();
         this.propagation = propagation;
         this.constraints = new ArrayList<>();
@@ -42,7 +41,7 @@ public class Variable implements Comparable<Variable>{
      * @return True if the value is in the domain, false otherwise.
      */
     public boolean isInDomain(int a){
-        return this.domain[depth].contains(a);
+        return this.domain.contains(a);
     }
 
     /**
@@ -50,7 +49,7 @@ public class Variable implements Comparable<Variable>{
      * @return True if the domain is empty, false otherwise.
      */
     public boolean isDomainEmpty(){
-        return this.domain[depth].isEmpty();
+        return this.domain.isEmpty();
     }
 
 
@@ -102,7 +101,7 @@ public class Variable implements Comparable<Variable>{
      */
     public boolean removeValue(int a){
         if(isInDomain(a)){
-            this.domain[depth].remove(a);
+            this.domain.remove(a);
             this.delta.add(a);
             propagation.add(this);
         }
@@ -118,8 +117,7 @@ public class Variable implements Comparable<Variable>{
     }
 
     public void reset(){
-        if(depth == 0) this.domain[depth] = this.originalDomain.copy();
-        else this.domain[depth] = this.domain[depth - 1].copy();
+        this.domain.setIndex(depth);
     }
 
     public void resetChoices(){
@@ -160,37 +158,30 @@ public class Variable implements Comparable<Variable>{
     }
 
     public Domain getDomain() {
-        if(depth < 0) return originalDomain;
-        return domain[depth];
+        return domain;
     }
 
     public int indexOf(int value){
         return this.getDomain().getIndex(value);
     }
 
-    public void initDomains(int N){
-        depth = 0;
-        this.domain = new Domain[N];
-        this.domain[0] = originalDomain.copy();
-    }
-
     public void set(int index){
-        ArrayList<Integer> values = new ArrayList<>(this.domain[depth].getValues());
+        ArrayList<Integer> values = new ArrayList<>(this.domain.getValues());
         for(int i = 0; i < values.size(); i++) if(i != index) removeValue(values.get(i));
     }
 
     public boolean setFirst(){
         int index = getFirstIndex();
         if(index < 0) return false;
-        tested.add(this.domain[depth].getValue(index));
+        tested.add(this.domain.getValue(index));
         set(index);
         return true;
     }
 
 
     private int getFirstIndex(){
-        for(int i = 0; i < this.domain[depth].size(); i++){
-            if(!tested.contains(this.domain[depth].getValue(i))) return i;
+        for(int i = 0; i < this.domain.size(); i++){
+            if(!tested.contains(this.domain.getValue(i))) return i;
         }
         return -1;
     }
@@ -213,8 +204,7 @@ public class Variable implements Comparable<Variable>{
      * @return -1 if smaller, 0 if equal, 1 if bigger
      */
     private int compareToDomainSize(Variable o){
-        return this.getDomainSize() < o.getDomainSize() ? -1 :
-                this.getDomainSize() == o.getDomainSize() ? 0 : 1;
+        return Integer.compare(this.getDomainSize(), o.getDomainSize());
     }
 
     /**
@@ -223,7 +213,6 @@ public class Variable implements Comparable<Variable>{
      * @return -1 if bigger, 0 if equal, 1 if smaller
      */
     private int compareToConstraintNumber(Variable o){
-        return this.getConstraintNumber() > o.getConstraintNumber() ? -1 :
-                this.getConstraintNumber() == o.getConstraintNumber() ? 0 : 1;
+        return Integer.compare(o.getConstraintNumber(), this.getConstraintNumber());
     }
 }

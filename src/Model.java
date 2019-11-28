@@ -378,7 +378,6 @@ public class Model {
         int index = 0;
 
         buildTables();
-        for(Variable v : variables) v.initDomains(variables.size());
 
         for(Variable x : constraints.keySet())
             for(Variable y : constraints.get(x).keySet())
