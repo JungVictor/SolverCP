@@ -241,6 +241,7 @@ public class Model {
                 }
                 index--;
             }
+            if (index < 0) return tuples;
             if (counts[index] >= variables.get(index).getDomainSize()) {
                 counts[index] = 0;
                 index--;

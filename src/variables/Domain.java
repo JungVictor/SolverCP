@@ -1,11 +1,12 @@
 package variables;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.Random;
 
 public class Domain {
 
-    ArrayList<Integer> domain;
+    private ArrayList<Integer> domain;
 
     public String toString(){
         if(domain.isEmpty()) return "{}";

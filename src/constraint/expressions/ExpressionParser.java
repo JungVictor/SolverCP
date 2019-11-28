@@ -1,7 +1,5 @@
 package constraint.expressions;
 
-import variables.Variable;
-
 import java.util.HashMap;
 
 public class ExpressionParser {
@@ -52,25 +50,24 @@ public class ExpressionParser {
             }
 
             String not_null = abs[0];
-            String[] splitted;
+            String[] splited;
             if (not_null.isEmpty()) not_null = abs[2];
 
-            String op = "";
             if (not_null.contains("+")) {
                 lastOperator = "+";
-                splitted = not_null.split("\\+", 2);
+                splited = not_null.split("\\+", 2);
             } else if (not_null.contains("-")) {
                 lastOperator = "-";
-                splitted = not_null.split("-", 2);
+                splited = not_null.split("-", 2);
             } else if (not_null.contains("*")) {
                 lastOperator = "*";
-                splitted = not_null.split("\\*", 2);
+                splited = not_null.split("\\*", 2);
             } else {
                 lastOperator = "/";
-                splitted = not_null.split("/", 2);
+                splited = not_null.split("/", 2);
             }
-            if(abs[0].isEmpty()) return new String[]{"|"+abs[1]+"|", splitted[1]};
-            else return new String[]{splitted[0], "|"+abs[1]+"|"};
+            if(abs[0].isEmpty()) return new String[]{"|"+abs[1]+"|", splited[1]};
+            else return new String[]{splited[0], "|"+abs[1]+"|"};
         }
         if (expr.contains("+")) {
             lastOperator = "+";
@@ -78,7 +75,10 @@ public class ExpressionParser {
         }
         if (expr.contains("-")) {
             lastOperator = "-";
-            return expr.split("-", 2);
+            String[] splited = expr.split("-", 2);
+            // -x
+            if(splited[0].isEmpty()) return new String[]{"0", splited[1]};
+            return splited;
         }
         if (expr.contains("*")) {
             lastOperator = "*";
@@ -93,17 +93,17 @@ public class ExpressionParser {
     }
 
     private Expression createExpr(String expr){
-        String[] splitted = splitArith(expr);
+        String[] splited = splitArith(expr);
         String current_op = lastOperator;
-        if(splitted.length == 1) {
-            if(current_op != null && current_op.equals("abs")) return new Expression(createExpr(splitted[0]), current_op);
+        if(splited.length == 1) {
+            if(current_op != null && current_op.equals("abs")) return new Expression(createExpr(splited[0]), current_op);
             try {
-                return new Expression(Integer.parseInt(splitted[0]));
+                return new Expression(Integer.parseInt(splited[0]));
             } catch (NumberFormatException e){
-                bind(splitted[0]);
-                return new Expression(splitted[0]);
+                bind(splited[0]);
+                return new Expression(splited[0]);
             }
-        } else return new Expression(createExpr(splitted[0]), current_op, createExpr(splitted[1]));
+        } else return new Expression(createExpr(splited[0]), current_op, createExpr(splited[1]));
     }
 
     public Expression parse(String expr){
@@ -112,9 +112,9 @@ public class ExpressionParser {
 
         expr = expr.replace(" ", "");
 
-        String[] splitted = splitCompare(expr);
-        String left = splitted[0];
-        String right = splitted[1];
+        String[] splited = splitCompare(expr);
+        String left = splited[0];
+        String right = splited[1];
 
 
         Expression leftExpr = createExpr(left);
