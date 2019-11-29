@@ -1,4 +1,4 @@
-package variables;
+package model.variables;
 
 import java.util.ArrayList;
 
@@ -8,9 +8,9 @@ public class Delta {
 
     public String toString(){
         if(delta.isEmpty()) return "{}";
-        String res = "{";
-        for(int i = 0; i < delta.size()-1; i++) res += delta.get(i) + ", ";
-        return res + delta.get(delta.size()-1) + "}";
+        StringBuilder res = new StringBuilder("{");
+        for(int i = 0; i < delta.size()-1; i++) res.append(delta.get(i)).append(", ");
+        return res.toString() + delta.get(delta.size()-1) + "}";
     }
 
     public Delta copy(){

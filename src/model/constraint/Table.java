@@ -1,7 +1,7 @@
-package constraint;
-import constraint.expressions.Expression;
-import constraint.expressions.ExpressionParser;
-import variables.Variable;
+package model.constraint;
+import model.constraint.expressions.Expression;
+import model.constraint.expressions.ExpressionParser;
+import model.variables.Variable;
 import java.util.ArrayList;
 import java.util.HashMap;
 

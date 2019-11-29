@@ -1,12 +1,12 @@
-package constraint.expressions;
+package model.constraint.expressions;
 
 import java.util.HashMap;
 
 public class Expression {
 
-    public static String[] comparison = {"<", "<=", ">", ">=", "==", "!="};
-    public static String[] arithmetic = {"+", "-", "*", "/"};
-    public static String[] unair = {"abs"};
+    public static String LT = "<", LEQ = "<=", GT = ">",  GEQ = ">=", EQ = "=", NEQ = "!=";
+    public static String PLUS = "+", MINUS = "-", MULT = "*", DIV = "/";
+    public static String ABS = "|";
 
     private HashMap<String, Integer> binding;
 
@@ -50,12 +50,12 @@ public class Expression {
     }
 
     public void changeSign(){
-        if(operator.equals("+")) operator = "-";
-        else if(operator.equals("-")) operator = "+";
+        if(operator.equals(PLUS)) operator = MINUS;
+        else if(operator.equals(MINUS)) operator = PLUS;
     }
 
     private int neutralValue(){
-        if(operator.equals("*") || operator.equals("/")) return 1;
+        if(operator.equals(MULT) || operator.equals(DIV)) return 1;
         return 0;
     }
 
@@ -63,11 +63,27 @@ public class Expression {
         return nVar;
     }
 
+    public String getOperator(){
+        return this.operator;
+    }
+
+    public Expression getLeft(){
+        return this.left;
+    }
+
+    public Expression getRight(){
+        return this.right;
+    }
+
+    public int getConstant(){
+        return this.constant;
+    }
+
     private int localEvaluation(int left, int right){
-        if(operator.equals("+")) return left + right;
-        else if(operator.equals("-")) return left - right;
-        else if(operator.equals("*")) return left * right;
-        else if(operator.equals("/")) return left / right;
+        if(operator.equals(PLUS)) return left + right;
+        else if(operator.equals(MINUS)) return left - right;
+        else if(operator.equals(MULT)) return left * right;
+        else if(operator.equals(DIV)) return left / right;
 
         // ABS
         if(left < 0) return -left;
@@ -88,11 +104,11 @@ public class Expression {
     }
 
     private boolean check(int left, int right){
-        if(operator.equals("<")) return left < right;
-        else if(operator.equals("<=")) return left <= right;
-        else if(operator.equals(">")) return left > right;
-        else if(operator.equals(">=")) return left >= right;
-        else if(operator.equals("==")) return left == right;
+        if(operator.equals(LT)) return left < right;
+        else if(operator.equals(LEQ)) return left <= right;
+        else if(operator.equals(GT)) return left > right;
+        else if(operator.equals(GEQ)) return left >= right;
+        else if(operator.equals(EQ)) return left == right;
         return left != right;
     }
 

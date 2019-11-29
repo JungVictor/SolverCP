@@ -1,9 +1,10 @@
-import constraint.Constraint;
-import constraint.expressions.Expression;
-import variables.Variable;
-import constraint.expressions.ExpressionParser;
+package problems;
 
-public class Main {
+import model.constraint.Constraint;
+import model.Model;
+import model.variables.Variable;
+
+public class NQueens {
 
     public static void main(String[] args){
 
@@ -16,10 +17,8 @@ public class Main {
         model.allDifferent(queens);
         for(int i = 0; i < N-1; i++){
             for(int j = i+1; j < N; j++){
-                model.addConstraint("x != y + " + (j-i), queens[i], queens[j]);
-                model.addConstraint("x != y - " + (j-i), queens[i], queens[j]);
-                //model.addConstraint(queens[i], "!=", queens[j], "+", (j-i));
-                //model.addConstraint(queens[i], "!=", queens[j], "-", (j-i));
+                model.addConstraint("queen[i] != queen[j] + " + (j-i), queens[i], queens[j]);
+                model.addConstraint("queen[i] != queen[j] - " + (j-i), queens[i], queens[j]);
             }
         }
         model.setDefaultFilter(Constraint.AC3);
@@ -28,8 +27,6 @@ public class Main {
         model.solve();
 
         System.out.print(model.stats());
-
-
     }
 
 }

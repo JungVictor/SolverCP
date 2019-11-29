@@ -1,8 +1,7 @@
-package variables;
+package model.variables;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
-import java.util.Random;
 
 public class Domain {
 
@@ -13,9 +12,9 @@ public class Domain {
 
     public String toString(){
         if(domain.isEmpty()) return "{}";
-        String res = "{";
-        for(int i = 0; i < domain.size()-1; i++) res += domain.get(i) + ", ";
-        return res + domain.get(domain.size()-1) + "}";
+        StringBuilder res = new StringBuilder("{");
+        for(int i = 0; i < domain.size()-1; i++) res.append(domain.get(i)).append(", ");
+        return res.toString() + domain.get(domain.size()-1) + "}";
     }
 
     public Domain copy(){
@@ -43,6 +42,17 @@ public class Domain {
     public Domain(int lb, int ub){
         this();
         add(lb, ub);
+    }
+
+    public boolean filter(String operator, int constant){
+        if(operator.equals("=")) domain.removeIf(n -> n != constant);
+        else if(operator.equals("!=")) domain.removeIf(n -> n == constant);
+        else if(operator.equals("<")) domain.removeIf(n -> n >= constant);
+        else if(operator.equals("<=")) domain.removeIf(n -> n > constant);
+        else if(operator.equals(">")) domain.removeIf(n -> n <= constant);
+        else if(operator.equals(">=")) domain.removeIf(n -> n < constant);
+
+        return !domain.isEmpty();
     }
 
     public int getValue(int index){

@@ -1,4 +1,4 @@
-package variables;
+package model.variables;
 
 import java.util.*;
 

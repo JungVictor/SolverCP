@@ -1,6 +1,6 @@
-package constraint;
+package model.constraint;
 
-import variables.Variable;
+import model.variables.Variable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -67,7 +67,7 @@ public class AC2001 extends Constraint {
             for(int key : domain){
                 int[] support = v2Support.get(key);
                 // Si la valeur n'a plus de support
-                if(support[0] == removed) {
+                if(support != null && support[0] == removed) {
                     // Si on ne trouve pas de nouveau support, on supprime
                     if(!searchSupport(v2, key, support[1])) v2.removeValue(key);
                 }

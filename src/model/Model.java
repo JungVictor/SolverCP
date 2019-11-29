@@ -1,9 +1,11 @@
-import constraint.*;
-import constraint.expressions.Expression;
-import constraint.expressions.ExpressionParser;
-import variables.Domain;
-import variables.Propagation;
-import variables.Variable;
+package model;
+
+import model.constraint.*;
+import model.constraint.expressions.Expression;
+import model.constraint.expressions.ExpressionParser;
+import model.variables.Domain;
+import model.variables.Propagation;
+import model.variables.Variable;
 
 import java.time.Clock;
 import java.util.*;
@@ -13,6 +15,7 @@ public class Model {
     // TIME
     private Clock clock;
     private long time;
+    private long construction;
 
     // UTIL
     private ExpressionParser parser = new ExpressionParser();   // Parser of expressions
@@ -44,6 +47,7 @@ public class Model {
         this.addedConstraints = new HashMap<>();
         this.addedExpressions = new HashMap<>();
         this.clock = Clock.systemDefaultZone();
+        construction = clock.millis();
     }
 
     public void setDefaultFilter(String filter){
@@ -160,6 +164,7 @@ public class Model {
             else constraints.get(x).put(y, table.intersection(t));
         } else {
             if(constraints.containsKey(y)){
+                System.out.println("wow");
                 Table t = getConstraintTable(y, x);
                 if(t == null) constraints.get(y).put(x, table);
                 else constraints.get(y).put(x, table.intersection(t));
@@ -206,11 +211,11 @@ public class Model {
             fake = new Variable(new Domain(0, size - 1), propagation);
 
             for (int i = 0; i < size; i++)
-                for (int j = 0; j < variables.size(); j++) tables[j].add(i, tuples.get(i)[j]);
+                for (int j = 0; j < variables.size(); j++) tables[j].add(tuples.get(i)[j], i);
 
             for (int i = 0; i < variables.size(); i++) {
                 tables[i].computeHashTable();
-                addConstraint(fake, variables.get(i), tables[i]);
+                addConstraint(variables.get(i), fake, tables[i]);
             }
             this.variables.add(fake);
         }
@@ -273,6 +278,11 @@ public class Model {
      * @param variables Variables binded to the formula
      */
     public void addConstraint(String expression, Variable... variables){
+        if(variables.length == 1) {
+            Expression expr = parser.parse(expression);
+            if(expr.nVar() != 1) return;
+            variables[0].filter(expr.getOperator(), expr.getRight().getConstant());
+        }
         if(variables.length == 2) addConstraint(variables[0], variables[1], new Table(expression, variables[0], variables[1]));
         else{
             Variable fake = getFakeVariable(variables);
@@ -283,7 +293,6 @@ public class Model {
 
                 this.addedConstraints.put(fake, variableArrayList);
                 this.addedExpressions.put(fake, new ArrayList<>());
-                this.variables.add(fake);
             }
             this.addedExpressions.get(fake).add(parser.parse(expression));
         }
@@ -384,6 +393,7 @@ public class Model {
                 buildConstraint(x, y, constraints.get(x).get(y));
 
         time = clock.millis();
+        construction = time - construction;
 
         while(true){
             if(index == variables.size()){
@@ -393,12 +403,15 @@ public class Model {
                 variables.get(index).reset();
                 NSOLUTIONS++;
                 if(DEBUG) System.out.println("solution");
-                if(NSOLUTIONS == nSol) return true;
+                if(NSOLUTIONS == nSol) {
+                    time = clock.millis() - time;
+                    return true;
+                }
             }
 
             for(Variable v : variables) v.setDepth(index);
 
-            orderVariables(index);
+            //orderVariables(index);
 
             Variable v = variables.get(index);
             if(DEBUG) {
@@ -458,7 +471,8 @@ public class Model {
     }
 
     public String stats(){
-        String stats = "Time (s) : " + time/1000.0;
+        String stats = "Building (s) : " + construction/1000.0;
+        stats += "\nExecution (s) : " + time/1000.0;
         stats += "\n# Fails : " + getFails();
         stats += "\n# Backtracks : " + getBacktracks();
         stats += "\n# Solutions : " + getNSolutions();

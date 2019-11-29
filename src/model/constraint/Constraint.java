@@ -1,5 +1,5 @@
-package constraint;
-import variables.Variable;
+package model.constraint;
+import model.variables.Variable;
 
 public abstract class Constraint {
 

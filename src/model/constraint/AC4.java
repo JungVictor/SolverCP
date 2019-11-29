@@ -1,7 +1,7 @@
-package constraint;
+package model.constraint;
 
-import variables.SupportList;
-import variables.Variable;
+import model.variables.SupportList;
+import model.variables.Variable;
 
 import java.util.ArrayList;
 import java.util.Collection;

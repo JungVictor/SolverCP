@@ -1,6 +1,6 @@
-package variables;
+package model.variables;
 
-import constraint.Constraint;
+import model.constraint.Constraint;
 
 import java.util.LinkedList;
 

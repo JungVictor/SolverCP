@@ -1,6 +1,6 @@
-package constraint;
+package model.constraint;
 
-import variables.Variable;
+import model.variables.Variable;
 
 import java.util.ArrayList;
 

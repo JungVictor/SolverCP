@@ -1,6 +1,6 @@
-package variables;
+package model.variables;
 
-import constraint.Constraint;
+import model.constraint.Constraint;
 
 import java.util.ArrayList;
 
@@ -33,6 +33,14 @@ public class Variable implements Comparable<Variable>{
         this.propagation = propagation;
         this.constraints = new ArrayList<>();
         this.tested = new ArrayList<>();
+    }
+
+    public void setDomain(Domain domain){
+        this.domain = domain.copy();
+    }
+
+    public boolean filter(String operator, int constant){
+        return this.domain.filter(operator, constant);
     }
 
     /**
