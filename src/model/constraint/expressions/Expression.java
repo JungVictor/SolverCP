@@ -35,7 +35,7 @@ public class Expression {
         }
         String left = this.left.toString();
         if(this.right != null) return "(" + left + " " + operator  + " " + this.right.toString() + ")";
-        return ABS + " " + left + " " + ABS;
+        return operator + " " + left + " " + operator;
     }
 
     /**
@@ -91,44 +91,40 @@ public class Expression {
      * Simplify an expression (sub function of simplify(Expresion expr))
      */
     private void simplify(){
+        simple();
         if(right == null) return;
         int value;
         // One of them is constant, and the other is constant and variable.
         if(left.nVar == 0) {
             if(right.left == null || right.right == null) return;
             if(right.left.nVar == 0) {
+                if((operator.equals(PLUS) || operator.equals(MINUS)) && (right.operator.equals(MULT) || right.operator.equals(DIV))) return;
                 value = localEvaluation(left.constant, operator, right.left.constant);
                 this.left = new Expression(value);
                 this.right = right.right;
-            }
-            else if(right.right.nVar == 0){
+            } else if(right.right.nVar == 0){
+                System.out.println(left + " " + operator +" " + right);
+                if((operator.equals(PLUS) || operator.equals(MINUS)) && (right.operator.equals(MULT) || right.operator.equals(DIV))) return;
                 value = localEvaluation(left.constant, operator, localEvaluation(right.neutralValue(), right.operator, right.right.constant));
                 this.left = new Expression(value);
                 this.right = right.left;
-            }
-
-            if(left.constant == neutralValue() && (operator.equals(PLUS) || operator.equals(MULT))){
-                this.left = this.right;
-                this.operator = null;
-                this.right = null;
+                System.out.println(left + " " + operator +" " + right);
             }
 
         } else if(right.nVar == 0){
             if(left.left == null || left.right == null) return;
-            if(left.left.nVar == 0) {
-                value = localEvaluation(left.left.constant, operator, right.constant);
-                this.left = left.right;
-                this.right = new Expression(value);
-            }
-            else if(left.right.nVar == 0){
-                value = localEvaluation(localEvaluation(left.neutralValue(), left.operator, left.right.constant), operator, right.constant);
-                this.left = left.left;
-                this.right = new Expression(value);
-            }
 
-            if(right.constant == neutralValue()){
-                this.operator = null;
-                this.right = null;
+            if(left.left.nVar == 0) {
+                if((operator.equals(PLUS) || operator.equals(MINUS)) && (left.operator.equals(MULT) || left.operator.equals(DIV))) return;
+                value = localEvaluation(left.left.constant, operator, right.constant);
+                this.operator = left.operator;
+                this.right = left.right;
+                this.left = new Expression(value);
+            } else if(left.right.nVar == 0){
+                if((operator.equals(PLUS) || operator.equals(MINUS)) && (left.operator.equals(MULT) || left.operator.equals(DIV))) return;
+                value = localEvaluation(localEvaluation(left.neutralValue(), left.operator, left.right.constant), operator, right.constant);
+                this.right = left.left;
+                this.left = new Expression(value);
             }
         }
     }
@@ -143,6 +139,18 @@ public class Expression {
         left.simple();
         right.simple();
 
+
+        if((right.nVar == 0 && right.constant == 0 && operator.equals(MULT)) ||
+                (left.nVar == 0 && left.constant == 0 && (operator.equals(MULT) || operator.equals(DIV)))){
+            this.constant = 0;
+            this.nVar = 0;
+            this.variable = null;
+            this.left = null;
+            this.right = null;
+            this.operator = null;
+            return;
+        }
+
         if(left.nVar == 0 && left.constant == neutralValue() && (operator.equals(PLUS) || operator.equals(MULT))){
             this.left = this.right;
             this.operator = null;
@@ -151,6 +159,10 @@ public class Expression {
             if(left.isLeaf()) {
                 variable = left.variable;
                 left = null;
+            } else {
+                this.right = this.left.right;
+                this.operator = this.left.operator;
+                this.left = this.left.left;
             }
 
         } else if(right.nVar == 0 && right.constant == neutralValue()){
@@ -160,6 +172,10 @@ public class Expression {
             if(left.isLeaf()) {
                 variable = left.variable;
                 left = null;
+            } else {
+                this.right = this.left.right;
+                this.operator = this.left.operator;
+                this.left = this.left.left;
             }
         }
     }

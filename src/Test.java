@@ -21,7 +21,7 @@ public class Test {
         // 0 - (x - (2 + y))
         // 0 - (x - 2 - y)
         // -x + 2 + y
-        Expression expression = parser.parse("-x + 1 - 1 + y < -5");
+        Expression expression = parser.parse("-x + 1 - 1 - y < -5");
         System.out.println(expression);
 
         model.addConstraint("-x - 1 - 1 - y < -5", x, y);

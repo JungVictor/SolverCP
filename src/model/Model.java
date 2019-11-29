@@ -26,6 +26,8 @@ public class Model {
     private ArrayList<Variable> staticVariables;    // All the "base" variables (for which to output a solution)
     private String defaultFilter = Constraint.AC3;  // Default filter used
 
+    private HashMap<String, Expression> expressions;
+
     // CONSTRAINTS
     private HashMap<Variable, HashMap<Variable, Table>> constraints;    // All constraint's tables (binary)
     private HashMap<Variable, ArrayList<Variable>> addedConstraints;    // All new variables (n-ary)
@@ -46,6 +48,7 @@ public class Model {
         this.constraints = new HashMap<>();
         this.addedConstraints = new HashMap<>();
         this.addedExpressions = new HashMap<>();
+        this.expressions = new HashMap<>();
         this.clock = Clock.systemDefaultZone();
         construction = clock.millis();
     }
@@ -272,16 +275,14 @@ public class Model {
         addConstraintToMap(x, y, table);
     }
 
-    /**
-     * Add a constraint between any number of variables according to the given expression.
-     * @param expression String representing a mathematical constraint
-     * @param variables Variables binded to the formula
-     */
-    public void addConstraint(String expression, Variable... variables){
+    public Expression createExpression(String expression){
+        return this.parser.parse(expression);
+    }
+
+    public void addConstraint(Expression expression, Variable... variables){
         if(variables.length == 1) {
-            Expression expr = parser.parse(expression);
-            if(expr.nVar() != 1) return;
-            variables[0].filter(expr);
+            if(expression.nVar() != 1) return;
+            variables[0].filter(expression);
         }
         if(variables.length == 2) addConstraint(variables[0], variables[1], new Table(expression, variables[0], variables[1]));
         else{
@@ -294,8 +295,22 @@ public class Model {
                 this.addedConstraints.put(fake, variableArrayList);
                 this.addedExpressions.put(fake, new ArrayList<>());
             }
-            this.addedExpressions.get(fake).add(parser.parse(expression));
+            this.addedExpressions.get(fake).add(expression);
         }
+    }
+
+    /**
+     * Add a constraint between any number of variables according to the given expression.
+     * @param expression String representing a mathematical constraint
+     * @param variables Variables binded to the formula
+     */
+    public void addConstraint(String expression, Variable... variables){
+        Expression expr = this.expressions.get(expression);
+        if(expr == null) {
+            expr = parser.parse(expression);
+            this.expressions.put(expression, expr);
+        }
+        addConstraint(expr, variables);
     }
 
     /**
