@@ -1,6 +1,7 @@
 package model.variables;
 
 import model.constraint.Constraint;
+import model.constraint.expressions.Expression;
 
 import java.util.ArrayList;
 
@@ -39,8 +40,8 @@ public class Variable implements Comparable<Variable>{
         this.domain = domain.copy();
     }
 
-    public boolean filter(String operator, int constant){
-        return this.domain.filter(operator, constant);
+    public boolean filter(Expression expression){
+        return this.domain.filter(expression);
     }
 
     /**

@@ -1,5 +1,7 @@
 package model.variables;
 
+import model.constraint.expressions.Expression;
+
 import java.util.ArrayList;
 import java.util.LinkedList;
 
@@ -44,13 +46,8 @@ public class Domain {
         add(lb, ub);
     }
 
-    public boolean filter(String operator, int constant){
-        if(operator.equals("=")) domain.removeIf(n -> n != constant);
-        else if(operator.equals("!=")) domain.removeIf(n -> n == constant);
-        else if(operator.equals("<")) domain.removeIf(n -> n >= constant);
-        else if(operator.equals("<=")) domain.removeIf(n -> n > constant);
-        else if(operator.equals(">")) domain.removeIf(n -> n <= constant);
-        else if(operator.equals(">=")) domain.removeIf(n -> n < constant);
+    public boolean filter(Expression expression){
+        domain.removeIf(n -> !expression.eval(n));
 
         return !domain.isEmpty();
     }

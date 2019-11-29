@@ -281,7 +281,7 @@ public class Model {
         if(variables.length == 1) {
             Expression expr = parser.parse(expression);
             if(expr.nVar() != 1) return;
-            variables[0].filter(expr.getOperator(), expr.getRight().getConstant());
+            variables[0].filter(expr);
         }
         if(variables.length == 2) addConstraint(variables[0], variables[1], new Table(expression, variables[0], variables[1]));
         else{
