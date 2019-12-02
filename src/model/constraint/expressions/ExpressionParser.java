@@ -9,6 +9,10 @@ public class ExpressionParser {
     private HashMap<String, Integer> binders;
     private int bind;
 
+    private String variable_name = "parenthesis_var_";
+    private int variable_count;
+    private HashMap<String, Expression> parenthesisExpressions;
+
     // Last operator parsed
     private String lastOperator;
     // Comparison operator (unique)
@@ -55,42 +59,63 @@ public class ExpressionParser {
         return expr.split("\\"+EQ);
     }
 
+    private String parenthesis_parse(String expression){
+        while(expression.contains("(")) expression = parenthesis_replace(expression);
+        return expression;
+    }
+
+    private String absolute_parse(String expression){
+        StringBuilder builder = new StringBuilder(expression);
+        int first_index = builder.indexOf("|");
+        int last_index = builder.lastIndexOf("|");
+
+        while(last_index != first_index && last_index > 0 && first_index > 0){
+            builder.setCharAt(last_index, '!');
+            builder.setCharAt(first_index, '&');
+            last_index = builder.lastIndexOf("|");
+            first_index = builder.indexOf("&");
+        }
+        expression = builder.toString();
+        while(expression.contains("!")) expression = absolute_replace(expression);
+        return expression;
+    }
+
+    private String absolute_replace(String expression){
+        // First index of ")"
+        int close = expression.indexOf('!');
+        int open = close;
+        while (open > 0){
+            open--;
+            if(expression.charAt(open) == '&') break;
+        }
+        String parenthesis = expression.substring(open+1, close);
+        Expression parenthesisExpression = createExpr(parenthesis);
+        String name = this.variable_name+(variable_count++);
+        this.parenthesisExpressions.put(name, parenthesisExpression);
+        return expression.replace("&"+parenthesis+"!", name);
+    }
+
+    private String parenthesis_replace(String expression){
+        // First index of ")"
+        int close = expression.indexOf(')');
+        int open = close;
+        while (open > 0){
+            open--;
+            if(expression.charAt(open) == '(') break;
+        }
+        String parenthesis = expression.substring(open+1, close);
+        Expression parenthesisExpression = createExpr(parenthesis);
+        String name = this.variable_name+(variable_count++);
+        this.parenthesisExpressions.put(name, parenthesisExpression);
+        return expression.replace("("+parenthesis+")", name);
+    }
+
     /**
      * Split the expression according to the most important operator in it.
      * @param expr Mathematical expression
      * @return Two sub-expressions (left and right) or one sub-expression (left --- unary operator case)
      */
     private String[] splitArith(String expr) {
-        if (expr.contains(ABS)) {
-            String[] abs = expr.split("\\"+ABS, 3);
-            if (abs[0].isEmpty() && abs[2].isEmpty()) {
-                lastOperator = ABS;
-                return new String[]{abs[1]};
-            }
-
-            String not_null = abs[0];
-            String[] split;
-            if (not_null.isEmpty()) not_null = abs[2];
-
-            if (not_null.contains(MODULO)){
-                lastOperator = MODULO;
-                split = not_null.split("\\"+MODULO, 2);
-            } else if (not_null.contains(PLUS)) {
-                lastOperator = PLUS;
-                split = not_null.split("\\"+PLUS, 2);
-            } else if (not_null.contains(MINUS)) {
-                lastOperator = MINUS;
-                split = not_null.split("\\"+MINUS, 2);
-            } else if (not_null.contains(MULT)) {
-                lastOperator = MULT;
-                split = not_null.split("\\"+MULT, 2);
-            } else {
-                lastOperator = DIV;
-                split = not_null.split("\\"+DIV, 2);
-            }
-            if(abs[0].isEmpty()) return new String[]{ABS+abs[1]+ABS, split[1]};
-            else return new String[]{split[0], ABS+abs[1]+ABS};
-        }
         if (expr.contains(MODULO)){
             lastOperator = MODULO;
             return expr.split("\\"+MODULO, 2);
@@ -131,6 +156,7 @@ public class ExpressionParser {
             try {
                 return new Expression(Integer.parseInt(split[0]));
             } catch (NumberFormatException e){
+                if(parenthesisExpressions.containsKey(split[0])) return parenthesisExpressions.get(split[0]);
                 bind(split[0]);
                 return new Expression(split[0]);
             }
@@ -151,9 +177,13 @@ public class ExpressionParser {
         // Init
         this.binders = new HashMap<>();
         this.bind = 0;
+        this.parenthesisExpressions = new HashMap<>();
+        this.variable_count = 0;
 
         // Delete useless spaces
         expr = expr.replace(" ", "");
+        expr = absolute_parse(expr);
+        expr = parenthesis_parse(expr);
 
         // Split in two subexpression to compare
         String[] split = splitCompare(expr);

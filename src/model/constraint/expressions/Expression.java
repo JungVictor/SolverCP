@@ -99,16 +99,16 @@ public class Expression {
             if(right.left == null || right.right == null) return;
             if(right.left.nVar == 0) {
                 if((operator.equals(PLUS) || operator.equals(MINUS)) && (right.operator.equals(MULT) || right.operator.equals(DIV))) return;
+                if((right.operator.equals(MODULO))) return;
                 value = localEvaluation(left.constant, operator, right.left.constant);
                 this.left = new Expression(value);
                 this.right = right.right;
             } else if(right.right.nVar == 0){
-                System.out.println(left + " " + operator +" " + right);
                 if((operator.equals(PLUS) || operator.equals(MINUS)) && (right.operator.equals(MULT) || right.operator.equals(DIV))) return;
+                if((right.operator.equals(MODULO))) return;
                 value = localEvaluation(left.constant, operator, localEvaluation(right.neutralValue(), right.operator, right.right.constant));
                 this.left = new Expression(value);
                 this.right = right.left;
-                System.out.println(left + " " + operator +" " + right);
             }
 
         } else if(right.nVar == 0){
@@ -116,15 +116,17 @@ public class Expression {
 
             if(left.left.nVar == 0) {
                 if((operator.equals(PLUS) || operator.equals(MINUS)) && (left.operator.equals(MULT) || left.operator.equals(DIV))) return;
+                if((left.operator.equals(MODULO))) return;
                 value = localEvaluation(left.left.constant, operator, right.constant);
                 this.operator = left.operator;
                 this.right = left.right;
                 this.left = new Expression(value);
             } else if(left.right.nVar == 0){
                 if((operator.equals(PLUS) || operator.equals(MINUS)) && (left.operator.equals(MULT) || left.operator.equals(DIV))) return;
+                if((left.operator.equals(MODULO))) return;
                 value = localEvaluation(localEvaluation(left.neutralValue(), left.operator, left.right.constant), operator, right.constant);
-                this.right = left.left;
-                this.left = new Expression(value);
+                this.left = left.left;
+                this.right = new Expression(value);
             }
         }
     }

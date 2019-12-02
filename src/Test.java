@@ -3,10 +3,19 @@ import model.constraint.expressions.Expression;
 import model.constraint.expressions.ExpressionParser;
 import model.variables.Variable;
 
+import java.util.function.Predicate;
+
 public class Test {
 
     public static void main(String[] args){
 
+        String test = "(|5 * (y + z)| + a % 5) * 4 < 5";
+        ExpressionParser parser = new ExpressionParser();
+        Expression expression = parser.parse(test);
+
+        System.out.println(expression);
+
+        /*
         Model model = new Model();
 
         Variable x = model.addVariable(1, 10);
@@ -36,6 +45,8 @@ public class Test {
             //for(int s : sol) System.out.print(s + " ");
             //System.out.println();
         }
+
+         */
 
     }
 
