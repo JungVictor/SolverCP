@@ -8,6 +8,7 @@ public class Expression {
     public static String LT = "<", LEQ = "<=", GT = ">",  GEQ = ">=", EQ = "=", NEQ = "!=";
     public static String PLUS = "+", MINUS = "-", MULT = "*", DIV = "/";
     public static String ABS = "|", MODULO = "%";
+    public static char OPEN_PAR = '(', CLOSE_PAR = ')';
 
     // Bindings of variables names => int value
     private HashMap<String, Integer> binding;
@@ -35,7 +36,7 @@ public class Expression {
         }
         String left = this.left.toString();
         if(this.right != null) return "(" + left + " " + operator  + " " + this.right.toString() + ")";
-        return operator + " " + left + " " + operator;
+        return operator + left + operator;
     }
 
     /**

@@ -5,11 +5,14 @@ import static model.constraint.expressions.Expression.*;
 
 public class ExpressionParser {
 
+    // Used to parse the beginning and the end of an absolute value
+    private char OPEN_ABS = '&', CLOSE_ABS = ';';
+
     // Binding between variables' name and their index.
     private HashMap<String, Integer> binders;
     private int bind;
 
-    private String variable_name = "parenthesis_var_";
+    private String variable_name = "priority_var_";
     private int variable_count;
     private HashMap<String, Expression> parenthesisExpressions;
 
@@ -59,55 +62,70 @@ public class ExpressionParser {
         return expr.split("\\"+EQ);
     }
 
-    private String parenthesis_parse(String expression){
-        while(expression.contains("(")) expression = parenthesis_replace(expression);
+    private String priority_parse(String expression){
+        int i = 0;
+        expression = absolute_parse(expression);
+        while(i < expression.length()) {
+            if (expression.charAt(i) == OPEN_ABS){
+                expression = absolute_replace(expression);
+                i = 0;
+            } else if (expression.charAt(i) == OPEN_PAR){
+                expression = parenthesis_replace(expression);
+                i = 0;
+            }
+            else i++;
+        }
         return expression;
     }
 
     private String absolute_parse(String expression){
         StringBuilder builder = new StringBuilder(expression);
-        int first_index = builder.indexOf("|");
-        int last_index = builder.lastIndexOf("|");
+        int first_index = builder.indexOf(ABS);
+        int last_index = builder.lastIndexOf(ABS);
 
         while(last_index != first_index && last_index > 0 && first_index > 0){
-            builder.setCharAt(last_index, '!');
-            builder.setCharAt(first_index, '&');
-            last_index = builder.lastIndexOf("|");
-            first_index = builder.indexOf("&");
+            builder.setCharAt(last_index, CLOSE_ABS);
+            builder.setCharAt(first_index, OPEN_ABS);
+            last_index = builder.lastIndexOf(ABS);
+            first_index = builder.indexOf(OPEN_ABS +"");
         }
         expression = builder.toString();
-        while(expression.contains("!")) expression = absolute_replace(expression);
         return expression;
     }
 
     private String absolute_replace(String expression){
-        // First index of ")"
-        int close = expression.indexOf('!');
+        // First index of "|" (close)
+        int close = expression.indexOf(CLOSE_ABS);
         int open = close;
         while (open > 0){
             open--;
-            if(expression.charAt(open) == '&') break;
+            if(expression.charAt(open) == OPEN_ABS) break;
         }
-        String parenthesis = expression.substring(open+1, close);
-        Expression parenthesisExpression = createExpr(parenthesis);
+        String absolute = expression.substring(open+1, close);
+        String absolute_replaced = absolute;
+        if(absolute.contains(OPEN_PAR+"")) absolute_replaced = parenthesis_replace(absolute_replaced);
+        Expression absoluteExpression = new Expression(createExpr(absolute_replaced), ABS);
         String name = this.variable_name+(variable_count++);
-        this.parenthesisExpressions.put(name, parenthesisExpression);
-        return expression.replace("&"+parenthesis+"!", name);
+        this.parenthesisExpressions.put(name, absoluteExpression);
+        return expression.replace(OPEN_ABS + absolute + CLOSE_ABS, name);
     }
 
     private String parenthesis_replace(String expression){
         // First index of ")"
-        int close = expression.indexOf(')');
+        int close = expression.indexOf(CLOSE_PAR);
         int open = close;
         while (open > 0){
             open--;
-            if(expression.charAt(open) == '(') break;
+            if(expression.charAt(open) == OPEN_PAR) break;
         }
         String parenthesis = expression.substring(open+1, close);
-        Expression parenthesisExpression = createExpr(parenthesis);
+        String parenthesis_replaced = parenthesis;
+        if(parenthesis.contains(OPEN_ABS +"")) parenthesis_replaced = absolute_replace(parenthesis_replaced);
+        Expression parenthesisExpression = createExpr(parenthesis_replaced);
         String name = this.variable_name+(variable_count++);
         this.parenthesisExpressions.put(name, parenthesisExpression);
-        return expression.replace("("+parenthesis+")", name);
+        expression = expression.replace(OPEN_PAR+parenthesis+CLOSE_PAR, name);
+        return expression;
     }
 
     /**
@@ -182,8 +200,7 @@ public class ExpressionParser {
 
         // Delete useless spaces
         expr = expr.replace(" ", "");
-        expr = absolute_parse(expr);
-        expr = parenthesis_parse(expr);
+        expr = priority_parse(expr);
 
         // Split in two subexpression to compare
         String[] split = splitCompare(expr);

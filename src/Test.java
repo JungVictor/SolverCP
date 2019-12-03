@@ -9,7 +9,7 @@ public class Test {
 
     public static void main(String[] args){
 
-        String test = "(|5 * (y + z)| + a % 5) * 4 < 5";
+        String test = "(1 - 1) * 20 < x";
         ExpressionParser parser = new ExpressionParser();
         Expression expression = parser.parse(test);
 
