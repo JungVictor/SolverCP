@@ -10,7 +10,7 @@ public class NQueens {
 
         Model model = new Model();
 
-        int N = 12;
+        int N = 10;
 
         Variable[] queens = model.addVariables(N, 1, N);
 
@@ -21,7 +21,7 @@ public class NQueens {
                 model.addConstraint("queen[i] != queen[j] - " + (j-i), queens[i], queens[j]);
             }
         }
-        model.setDefaultFilter(Constraint.AC3);
+        model.setDefaultFilter(Constraint.AC4);
         model.lookingForSolution(0);
         model.setDebugMode(false);
         model.solve();

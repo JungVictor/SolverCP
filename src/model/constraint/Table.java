@@ -11,7 +11,7 @@ public class Table {
     private HashMap<Integer, ArrayList<Integer>> xTable;
 
     private static String[] COMP_OP = {">", ">=", "<", "<=", "==", "!="},
-                            ARITH_OP = {"+", "-", "*", "/"};
+            ARITH_OP = {"+", "-", "*", "/"};
 
     /********************
      * CREATING A TABLE *
@@ -114,19 +114,15 @@ public class Table {
     }
 
     private void compare(Variable x, String op, int cons1, String op2, Variable y, String op3, int cons2){
-        ArrayList<Integer> xValues = x.getDomain().getValues();
-        ArrayList<Integer> yValues = y.getDomain().getValues();
 
-        for(int xVal : xValues) for(int yVal : yValues) if(check(xVal, op, cons1, op2, yVal, op3, cons2)) addToTable(xVal, yVal);
+        for(int xVal : x.getDomainValues()) for(int yVal : y.getDomainValues()) if(check(xVal, op, cons1, op2, yVal, op3, cons2)) addToTable(xVal, yVal);
 
         computeHashTable();
     }
 
     private void computeTuples(Expression expr, Variable x, Variable y){
-        ArrayList<Integer> xValues = x.getDomain().getValues();
-        ArrayList<Integer> yValues = y.getDomain().getValues();
 
-        for(int xVal : xValues) for(int yVal : yValues) if(expr.eval(xVal, yVal)) addToTable(xVal, yVal);
+        for(int xVal : x.getDomainValues()) for(int yVal : y.getDomainValues()) if(expr.eval(xVal, yVal)) addToTable(xVal, yVal);
         computeHashTable();
     }
 

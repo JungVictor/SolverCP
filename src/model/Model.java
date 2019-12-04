@@ -411,7 +411,7 @@ public class Model {
         construction = time - construction;
 
         while(true){
-            if(index == variables.size()){
+            if(index == staticVariables.size()){
                 status = true;
                 index--;
                 solutions.add(solution());
@@ -428,7 +428,7 @@ public class Model {
 
             //orderVariables(index);
 
-            Variable v = variables.get(index);
+            Variable v = staticVariables.get(index);
             if(DEBUG) {
                 System.out.println("\n---------------------------");
                 System.out.println("DEPTH = " + index);

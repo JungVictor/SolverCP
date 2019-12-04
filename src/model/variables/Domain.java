@@ -1,59 +1,45 @@
 package model.variables;
 
 import model.constraint.expressions.Expression;
-
-import java.util.ArrayList;
-import java.util.LinkedList;
+import structures.UnorderedReversibleList;
 
 public class Domain {
 
-    private ArrayList<Integer> domain;
-    private LinkedList<Integer> removed;
-    private ArrayList<Integer> toPop;
-    private int index, maxIndex;
+    private UnorderedReversibleList domain;
+    private int index = 0;
 
     public String toString(){
-        if(domain.isEmpty()) return "{}";
-        StringBuilder res = new StringBuilder("{");
-        for(int i = 0; i < domain.size()-1; i++) res.append(domain.get(i)).append(", ");
-        return res.toString() + domain.get(domain.size()-1) + "}";
+        return domain.toString();
     }
 
     public Domain copy(){
-        Domain copy = new Domain();
-        copy.add(this.domain);
+        Domain copy = new Domain(this.domain.getList());
         return copy;
     }
 
-    public Domain(){
-        this.domain = new ArrayList<>();
-        this.removed = new LinkedList<>();
-        this.toPop = new ArrayList<>();
-        this.index = -1;
-        this.maxIndex = -1;
+    public void set(int index){
+        this.domain.set(index);
     }
 
-    public Domain(int v){
-        this();
-        add(v);
-    }
     public Domain(int[] values){
-        this();
-        add(values);
+        this.domain = new UnorderedReversibleList(values);
+        this.domain.save();
     }
+
     public Domain(int lb, int ub){
-        this();
-        add(lb, ub);
+        int[] dom = new int[ub-lb+1];
+        for(int i = 0; i < dom.length; i++) dom[i] = lb+i;
+        this.domain = new UnorderedReversibleList(dom);
+        this.domain.save();
     }
 
     public boolean filter(Expression expression){
         domain.removeIf(n -> !expression.eval(n));
-
         return !domain.isEmpty();
     }
 
     public int getValue(int index){
-        return this.domain.get(index);
+        return this.domain.getValue(index);
     }
 
     public int size(){
@@ -64,34 +50,6 @@ public class Domain {
         return this.domain.size() == 1;
     }
 
-    /**
-     * Add a value to the domain
-     * @param a
-     */
-    public void add(int a){
-        this.domain.add(a);
-    }
-
-    /**
-     * Add values to the domain
-     * @param values
-     */
-    public void add(int[] values){
-        for(int v : values) add(v);
-    }
-
-    public void add(ArrayList<Integer> values){
-        this.domain.addAll(values);
-    }
-
-    /**
-     * Add all values from the interval [lb, ub]
-     * @param lb lower bound
-     * @param ub upper bound
-     */
-    public void add(int lb, int ub){
-        for(int i = lb; i < ub+1; i++) add(i);
-    }
 
     /**
      * Check if an element is in the domain
@@ -102,36 +60,26 @@ public class Domain {
         return this.domain.contains(a);
     }
 
-    public void restore(int index) {
-        int nPop = 0;
-        for (int i = this.index; i >= index; i--) {
-            nPop += this.toPop.get(i);
-            this.toPop.set(i, 0);
-        }
-        for (int i = 0; i < nPop; i++) domain.add(removed.pop());
+    public void restore() {
+        domain.restore();
     }
 
     public void setIndex(int index){
-        if(index > maxIndex){
-            maxIndex = index;
-            toPop.add(0);
-        } else if (this.index < index) toPop.set(index, 0);
-        else restore(index);
+        if(this.index < index) domain.save();
+        else {
+            restore();
+            if(this.index == index) domain.save();
+        }
         this.index = index;
     }
 
     /**
      * Remove an element from the domain
-     * @param a element
+     * @param element
      * @return False if the domain is empty, true otherwise.
      */
-    public boolean remove(int a){
-        int index = getIndex(a);
-        if(index >= 0) {
-            this.domain.remove(index);
-            this.removed.push(a);
-            this.toPop.set(this.index, this.toPop.get(this.index)+1);
-        }
+    public boolean remove(int element){
+        this.domain.removeValue(element);
         return !this.domain.isEmpty();
     }
 
@@ -147,7 +95,7 @@ public class Domain {
         return this.domain.isEmpty();
     }
 
-    public ArrayList<Integer> getValues() {
+    public UnorderedReversibleList getValues() {
         return domain;
     }
 }

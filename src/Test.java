@@ -1,7 +1,9 @@
 import model.Model;
 import model.constraint.expressions.Expression;
 import model.constraint.expressions.ExpressionParser;
+import model.variables.Domain;
 import model.variables.Variable;
+import structures.UnorderedReversibleList;
 
 import java.util.function.Predicate;
 
@@ -9,7 +11,7 @@ public class Test {
 
     public static void main(String[] args){
 
-        String test = "(1 - 1) * 20 < x";
+        String test = "(1 - 1) * 20 + 20 - 40 + 20 < x";
         ExpressionParser parser = new ExpressionParser();
         Expression expression = parser.parse(test);
 

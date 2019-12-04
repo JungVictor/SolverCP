@@ -2,6 +2,7 @@ package model.variables;
 
 import model.constraint.Constraint;
 import model.constraint.expressions.Expression;
+import structures.UnorderedReversibleList;
 
 import java.util.ArrayList;
 
@@ -74,7 +75,7 @@ public class Variable implements Comparable<Variable>{
      * Get the values remaining in the domain
      * @return
      */
-    public ArrayList<Integer> getDomainValues(){
+    public UnorderedReversibleList getDomainValues(){
         return this.getDomain().getValues();
     }
 
@@ -109,11 +110,10 @@ public class Variable implements Comparable<Variable>{
      * @return True of the domain is empty after the call, false otherwise.
      */
     public boolean removeValue(int a){
-        if(isInDomain(a)){
-            this.domain.remove(a);
-            this.delta.add(a);
-            propagation.add(this);
-        }
+        this.domain.remove(a);
+        this.delta.add(a);
+        propagation.add(this);
+
         return isDomainEmpty();
     }
 
@@ -142,6 +142,7 @@ public class Variable implements Comparable<Variable>{
 
     public void setDepth(int depth){
         this.depth = depth;
+        this.reset();
         this.reset();
         if(!getDomain().isSet()) for(Constraint c : constraints) c.setIndex(depth);
     }
@@ -175,8 +176,9 @@ public class Variable implements Comparable<Variable>{
     }
 
     public void set(int index){
-        ArrayList<Integer> values = new ArrayList<>(this.domain.getValues());
-        for(int i = 0; i < values.size(); i++) if(i != index) removeValue(values.get(i));
+        for(int i = 0; i < domain.size(); i++) if(i != index) this.delta.add(domain.getValue(i));
+        this.domain.set(index);
+        this.propagation.add(this);
     }
 
     public boolean setFirst(){

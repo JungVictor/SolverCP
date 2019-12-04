@@ -16,13 +16,11 @@ public class AC3 extends Constraint {
 
     @Override
     public boolean filterFrom(Variable v) {
-        ArrayList<Integer> xValues = new ArrayList<>(x.getDomainValues());
-        ArrayList<Integer> yValues = new ArrayList<>(y.getDomainValues());
         boolean supported;
         if(v == y){
-            for(int xVal : xValues){
+            for(int xVal : x.getDomainValues()){
                 supported = false;
-                for(int yVal : yValues){
+                for(int yVal : y.getDomainValues()){
                     if(isCompatible(xVal, yVal)) {
                         supported = true;
                         break;
@@ -32,9 +30,9 @@ public class AC3 extends Constraint {
             }
             return !x.isDomainEmpty();
         } else {
-            for(int yVal : yValues){
+            for(int yVal : y.getDomainValues()){
                 supported = false;
-                for(int xVal : xValues){
+                for(int xVal : x.getDomainValues()){
                     if(isCompatible(xVal, yVal)) {
                         supported = true;
                         break;

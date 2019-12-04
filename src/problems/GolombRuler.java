@@ -11,8 +11,8 @@ public class GolombRuler {
 
         //////////////////////
         // PROBLEM'S CONSTANTS
-        int N = 10;
-        int UB = 55;
+        int N = 9;
+        int UB = 44;
 
         int F = ((N-1)*N)/2;
 

@@ -4,7 +4,7 @@ import java.util.ArrayList;
 
 public class Delta {
 
-    ArrayList<Integer> delta;
+    private ArrayList<Integer> delta;
 
     public String toString(){
         if(delta.isEmpty()) return "{}";

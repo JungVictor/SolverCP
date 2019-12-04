@@ -61,10 +61,9 @@ public class AC2001 extends Constraint {
 
         // Removed values from v
         ArrayList<Integer> removedValues = v.getDelta().getDelta();
-        ArrayList<Integer> domain = new ArrayList<>(v2.getDomain().getValues());
 
         for(int removed : removedValues){
-            for(int key : domain){
+            for(int key : v2.getDomainValues()){
                 int[] support = v2Support.get(key);
                 // Si la valeur n'a plus de support
                 if(support != null && support[0] == removed) {
