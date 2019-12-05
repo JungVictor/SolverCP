@@ -3,7 +3,6 @@ package problems;
 import solver.Model;
 import solver.variables.Variable;
 import tools.ArgumentReader;
-import tools.builders.ExpressionBuilder;
 
 public class NQueens {
 
@@ -40,8 +39,6 @@ public class NQueens {
                 System.out.println();
             }
         }
-
-        for(int s : model.best()) System.out.print(s + " ");
     }
 
 }
