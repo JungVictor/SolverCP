@@ -1,18 +1,16 @@
-package model.constraint;
-import model.constraint.expressions.Expression;
-import model.constraint.expressions.ExpressionParser;
-import model.variables.Variable;
+package solver.constraint;
+import tools.expressions.Expression;
+import tools.builders.ExpressionBuilder;
+import solver.variables.Variable;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 
-public class Table {
+public class Table implements Iterable<int[]>{
 
+    private TableIterator iterator;
     private ArrayList<int[]> table;
     private HashMap<Integer, ArrayList<Integer>> xTable;
-    private ExpressionParser parser = new ExpressionParser();
-
-    private static String[] COMP_OP = {">", ">=", "<", "<=", "==", "!="},
-            ARITH_OP = {"+", "-", "*", "/"};
 
     /********************
      * CREATING A TABLE *
@@ -25,11 +23,12 @@ public class Table {
 
     public Table(String expr, Variable x, Variable y){
         this();
-        computeTuples(parser.parse(expr), x, y);
+        computeTuples(ExpressionBuilder.create(expr), x, y);
     }
 
     public Table(){
         this.table = new ArrayList<>();
+        this.iterator = new TableIterator();
     }
 
     public Table(ArrayList<int[]> table){
@@ -112,6 +111,10 @@ public class Table {
      * GETTERS *
      ***********/
 
+    public int size(){
+        return this.table.size();
+    }
+
     public ArrayList<int[]> getTable() {
         return table;
     }
@@ -144,5 +147,26 @@ public class Table {
 
 
         return false;
+    }
+
+    @Override
+    public Iterator<int[]> iterator(){
+        iterator.index = 0;
+        return iterator;
+    }
+
+    private class TableIterator implements Iterator<int[]>{
+
+        private int index = 0;
+
+        @Override
+        public boolean hasNext() {
+            return index < size();
+        }
+
+        @Override
+        public int[] next() {
+            return getTuple(index++);
+        }
     }
 }

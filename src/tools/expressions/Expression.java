@@ -1,4 +1,4 @@
-package model.constraint.expressions;
+package tools.expressions;
 
 import java.util.HashMap;
 
@@ -6,7 +6,7 @@ public class Expression {
 
     // All possible operations
     public static String LT = "<", LEQ = "<=", GT = ">",  GEQ = ">=", EQ = "=", NEQ = "!=";
-    public static String PLUS = "+", MINUS = "-", MULT = "*", DIV = "/";
+    public static String PLUS = "+", MINUS = "-", MULT = "*", DIV = "/", POW = "^";
     public static String ABS = "|", MODULO = "%";
     public static char OPEN_PAR = '(', CLOSE_PAR = ')';
 
@@ -142,6 +142,25 @@ public class Expression {
         left.simple();
         right.simple();
 
+        if(operator.equals(POW)){
+            if(right.nVar == 0 && right.constant == 0){
+                this.constant = 1;
+                this.nVar = 0;
+                this.variable = null;
+                this.left = null;
+                this.right = null;
+                this.operator = null;
+                return;
+            } if(left.nVar == 0 && left.constant == 0) {
+                this.constant = 0;
+                this.nVar = 0;
+                this.variable = null;
+                this.left = null;
+                this.right = null;
+                this.operator = null;
+                return;
+            }
+        }
 
         if((right.nVar == 0 && right.constant == 0 && operator.equals(MULT)) ||
                 (left.nVar == 0 && left.constant == 0 && (operator.equals(MULT) || operator.equals(DIV)))){
@@ -226,7 +245,7 @@ public class Expression {
      * @return 1 if operator is MULT or DIV, 0 otherwise.
      */
     private int neutralValue(){
-        if(operator.equals(MULT) || operator.equals(DIV)) return 1;
+        if(operator.equals(MULT) || operator.equals(DIV) || operator.equals(POW)) return 1;
         return 0;
     }
 
@@ -250,6 +269,7 @@ public class Expression {
         else if(operator.equals(MULT)) return left * right;
         else if(operator.equals(DIV)) return left / right;
         else if(operator.equals(MODULO)) return left % right;
+        else if(operator.equals(POW)) return (int) Math.pow(left, right);
         // ABS
         if(left < 0) return -left;
         return left;
@@ -299,6 +319,10 @@ public class Expression {
         int right_eval = right.eval_int(binding, values);
 
         return check(left_eval, right_eval);
+    }
+
+    public int eval_int(int... values){
+        return eval_int(binding, values);
     }
 
 }

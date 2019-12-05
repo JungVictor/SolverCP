@@ -1,16 +1,14 @@
-package model.constraint;
+package solver.constraint;
 
-import model.variables.SupportList;
-import model.variables.Variable;
-import structures.ReversibleUnorderedSet;
-import structures.ReversibleUnorderedSupportSet;
-
-import java.util.ArrayList;
-import java.util.Collection;
+import solver.variables.Delta;
+import solver.variables.Variable;
+import structures.set.ReversibleSet;
+import structures.supports.ReversibleSupportSet;
+import structures.supports.ReversibleUnorderedSupportSet;
 
 public class AC4 extends Constraint {
 
-    private ReversibleUnorderedSupportSet xSupports, ySupports;
+    private ReversibleSupportSet xSupports, ySupports;
 
     public AC4(Variable x, Variable y, Table table) {
         super(x, y, table);
@@ -28,13 +26,11 @@ public class AC4 extends Constraint {
     }
 
     private void computeSupports(){
-        ArrayList<int[]> tab = table.getTable();
-
         for(int xVal : x.getDomainValues()) xSupports.addKey(xVal);
         for(int yVal : y.getDomainValues()) ySupports.addKey(yVal);
 
-        for (int[] t : tab) {
-            if (x.getDomain().contains(t[0]) && y.getDomain().contains(t[1])) {
+        for (int[] t : table) {
+            if (x.contains(t[0]) && y.contains(t[1])) {
                 xSupports.put(t[0], t[1]);
                 ySupports.put(t[1], t[0]);
             }
@@ -48,9 +44,9 @@ public class AC4 extends Constraint {
     @Override
     public boolean filterFrom(Variable v) {
         Variable v2;
-        ArrayList<Integer> removed = v.getDeltaValues();
+        Delta removed = v.getDelta();
 
-        ReversibleUnorderedSupportSet vSupport, v2Support;
+        ReversibleSupportSet vSupport, v2Support;
         if(v == x){
             v2 = y;
             vSupport = xSupports;
@@ -67,7 +63,7 @@ public class AC4 extends Constraint {
         // Pour chaque valeur retirée de v
         for(int rem : removed){
             // Toutes les valeurs supportées par rem
-            ReversibleUnorderedSet supported = vSupport.getSupports(rem);
+            ReversibleSet supported = vSupport.getSupports(rem);
             if(supported != null) {
                 // Pour chaque valeur supportée
                 for (int s : supported) {

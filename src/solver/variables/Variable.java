@@ -1,8 +1,8 @@
-package model.variables;
+package solver.variables;
 
-import model.constraint.Constraint;
-import model.constraint.expressions.Expression;
-import structures.ReversibleUnorderedSet;
+import solver.constraint.Constraint;
+import tools.expressions.Expression;
+import structures.set.ReversibleSet;
 
 import java.util.ArrayList;
 
@@ -31,7 +31,7 @@ public class Variable implements Comparable<Variable>{
 
     public Variable(Domain domain, Propagation propagation){
         this.domain = domain.copy();
-        this.delta = new Delta();
+        this.delta = new Delta(domain.size());
         this.propagation = propagation;
         this.constraints = new ArrayList<>();
         this.tested = new ArrayList<>();
@@ -50,7 +50,7 @@ public class Variable implements Comparable<Variable>{
      * @param a value to be checked.
      * @return True if the value is in the domain, false otherwise.
      */
-    public boolean isInDomain(int a){
+    public boolean contains(int a){
         return this.domain.contains(a);
     }
 
@@ -75,7 +75,7 @@ public class Variable implements Comparable<Variable>{
      * Get the values remaining in the domain
      * @return
      */
-    public ReversibleUnorderedSet getDomainValues(){
+    public ReversibleSet getDomainValues(){
         return this.getDomain().getValues();
     }
 
@@ -92,8 +92,8 @@ public class Variable implements Comparable<Variable>{
      * Get values removed from the domain during the current iteration
      * @return
      */
-    public ArrayList<Integer> getDeltaValues(){
-        return this.delta.getDelta();
+    public Delta getDelta(){
+        return this.delta;
     }
 
     /**
@@ -113,7 +113,6 @@ public class Variable implements Comparable<Variable>{
         this.domain.remove(a);
         this.delta.add(a);
         propagation.add(this);
-
         return isDomainEmpty();
     }
 
@@ -144,10 +143,6 @@ public class Variable implements Comparable<Variable>{
         this.depth = depth;
         this.reset();
         if(!getDomain().isSet()) for(Constraint c : constraints) c.setIndex(depth);
-    }
-
-    public Delta getDelta(){
-        return this.delta;
     }
 
     /**

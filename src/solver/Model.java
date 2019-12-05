@@ -1,11 +1,15 @@
-package model;
+package solver;
 
-import model.constraint.*;
-import model.constraint.expressions.Expression;
-import model.constraint.expressions.ExpressionParser;
-import model.variables.Domain;
-import model.variables.Propagation;
-import model.variables.Variable;
+import solver.constraint.*;
+import tools.Logger;
+import tools.builders.ConstraintBuilder;
+import tools.expressions.Expression;
+import tools.builders.ExpressionBuilder;
+import tools.expressions.ExpressionParser;
+import solver.variables.Domain;
+import solver.variables.Propagation;
+import solver.variables.Variable;
+import tools.expressions.Objective;
 
 import java.time.Clock;
 import java.util.*;
@@ -24,7 +28,8 @@ public class Model {
     private Propagation propagation;                // The propagation object
     private ArrayList<Variable> variables;          // All the variables + the one generated (n-ary variables)
     private ArrayList<Variable> staticVariables;    // All the "base" variables (for which to output a solution)
-    private String defaultFilter = Constraint.AC3;  // Default filter used
+    private int filter = Constraint.AC3;  // Default filter used
+    private Objective objective;
 
     private HashMap<String, Expression> expressions;
 
@@ -32,6 +37,7 @@ public class Model {
     private HashMap<Variable, HashMap<Variable, Table>> constraints;    // All constraint's tables (binary)
     private HashMap<Variable, ArrayList<Variable>> addedConstraints;    // All new variables (n-ary)
     private HashMap<Variable, ArrayList<Expression>> addedExpressions;  // All n-ary expressions
+    private HashMap<Variable, ArrayList<Expression>> filterExpression;
 
     // INFORMATIONS
     private boolean status = false;         // Is there a solution ?
@@ -48,13 +54,37 @@ public class Model {
         this.constraints = new HashMap<>();
         this.addedConstraints = new HashMap<>();
         this.addedExpressions = new HashMap<>();
+        this.filterExpression = new HashMap<>();
         this.expressions = new HashMap<>();
         this.clock = Clock.systemDefaultZone();
         construction = clock.millis();
     }
 
-    public void setDefaultFilter(String filter){
-        defaultFilter = filter;
+    public void setFilter(int filter){
+        this.filter = filter;
+    }
+    public void setFilter(String filter){
+        this.filter = Constraint.toInt(filter);
+    }
+
+    public void minimize(Expression expression, Variable... variables){
+        this.objective = new Objective();
+        objective.minimize(expression, variables);
+    }
+
+    public void minimize(String expression, Variable... variables){
+        this.objective = new Objective();
+        objective.minimize(ExpressionBuilder.create_arith(expression), variables);
+    }
+
+    public void maximize(Expression expression, Variable... variables){
+        this.objective = new Objective();
+        objective.maximize(expression, variables);
+    }
+
+    public void maximize(String expression, Variable... variables){
+        this.objective = new Objective();
+        objective.maximize(ExpressionBuilder.create_arith(expression), variables);
     }
 
     /*******************************
@@ -69,7 +99,6 @@ public class Model {
     public Variable addVariable(Domain domain){
         Variable v = new Variable(domain, propagation);
         this.variables.add(v);
-        this.staticVariables.add(v);
         return v;
     }
 
@@ -199,6 +228,11 @@ public class Model {
         return null;
     }
 
+    private void filter(){
+        for(Variable v : filterExpression.keySet())
+            for(Expression e : filterExpression.get(v)) v.filter(e);
+    }
+
     /**
      * Build the table for each "fake" variables and add them to the model.
      */
@@ -275,14 +309,11 @@ public class Model {
         addConstraintToMap(x, y, table);
     }
 
-    public Expression createExpression(String expression){
-        return this.parser.parse(expression);
-    }
-
     public void addConstraint(Expression expression, Variable... variables){
         if(variables.length == 1) {
             if(expression.nVar() != 1) return;
-            variables[0].filter(expression);
+            if(!filterExpression.containsKey(variables[0])) filterExpression.put(variables[0], new ArrayList<>());
+            filterExpression.get(variables[0]).add(expression);
         }
         if(variables.length == 2) addConstraint(variables[0], variables[1], new Table(expression, variables[0], variables[1]));
         else{
@@ -307,7 +338,7 @@ public class Model {
     public void addConstraint(String expression, Variable... variables){
         Expression expr = this.expressions.get(expression);
         if(expr == null) {
-            expr = parser.parse(expression);
+            expr = ExpressionBuilder.create(expression);
             this.expressions.put(expression, expr);
         }
         addConstraint(expr, variables);
@@ -334,18 +365,21 @@ public class Model {
      * @return
      */
     private Constraint buildConstraint(Variable x, Variable y, Table table){
-        if(defaultFilter.equals(Constraint.AC3)) return new AC3(x, y, table);
-        if(defaultFilter.equals(Constraint.AC4)) return new AC4(x, y, table);
-        if(defaultFilter.equals(Constraint.AC6)) return new AC6(x, y, table);
-        if(defaultFilter.equals(Constraint.AC2001)) return new AC2001(x, y, table);
-
-        return null;
+        return ConstraintBuilder.constraint(x, y, table, filter);
     }
 
 
     /**************************
      * ORDERING THE VARIABLES *
      **************************/
+
+    public void decisionVariable(Variable v){
+        this.staticVariables.add(v);
+    }
+
+    public void decisionVariables(Variable[] variables){
+        Collections.addAll(staticVariables, variables);
+    }
 
     /**
      * Sort all variables
@@ -402,6 +436,7 @@ public class Model {
         int index = 0;
 
         buildTables();
+        filter();
 
         for(Variable x : constraints.keySet())
             for(Variable y : constraints.get(x).keySet())
@@ -415,9 +450,10 @@ public class Model {
                 status = true;
                 index--;
                 solutions.add(solution());
-                variables.get(index).reset();
+                if(objective != null) objective.keepBest(solutions.get(NSOLUTIONS));
+                staticVariables.get(index).reset();
                 NSOLUTIONS++;
-                if(DEBUG) System.out.println("solution");
+                if(DEBUG) Logger.debug("solution");
                 if(NSOLUTIONS == nSol) {
                     time = clock.millis() - time;
                     return true;
@@ -430,26 +466,26 @@ public class Model {
 
             Variable v = staticVariables.get(index);
             if(DEBUG) {
-                System.out.println("\n---------------------------");
-                System.out.println("DEPTH = " + index);
-                System.out.println("---------------------------");
-                for (int i = 0; i < variables.size(); i++) System.out.println(i + " " + variables.get(i).toString_());
+                Logger.println("\n---------------------------");
+                Logger.println("DEPTH = " + index);
+                Logger.println("---------------------------");
+                for (int i = 0; i < variables.size(); i++) Logger.println(i + " " + variables.get(i).toString_());
             }
 
             if(v.setFirst()) {
                 if (propagation.run()) {
-                    if(DEBUG) System.out.println(index + " set to " + v.getDomain().getValue(0));
+                    if(DEBUG) Logger.println(index + " set to " + v.getDomain().getValue(0));
 
                     if(DEBUG) {
-                        System.out.println("---------------------------");
-                        for (int i = 0; i < variables.size(); i++) System.out.println(i + " " + variables.get(i).toString_());
+                        Logger.println("---------------------------");
+                        for (int i = 0; i < variables.size(); i++) Logger.println(i + " " + variables.get(i).toString_());
                     }
                     index++;
                 }
                 else {
                     FAILS++;
                     for(Variable var : variables) var.resetDelta();
-                    if(DEBUG) System.out.println(index + " set to " + v.getDomain().getValue(0) + " : fail");
+                    if(DEBUG) Logger.println(index + " set to " + v.getDomain().getValue(0) + " : fail");
                 }
             } else {
                 if(index == 0) {
@@ -457,7 +493,7 @@ public class Model {
                     return status;
                 }
                 else {
-                    for(int i = index; i < variables.size(); i++) variables.get(i).resetChoices();
+                    for(int i = index; i < staticVariables.size(); i++) staticVariables.get(i).resetChoices();
                     index--;
                     BACKTRACKS++;
                 }
@@ -491,7 +527,14 @@ public class Model {
         stats += "\n# Fails : " + getFails();
         stats += "\n# Backtracks : " + getBacktracks();
         stats += "\n# Solutions : " + getNSolutions();
-        stats += "\nCONSTRAINT : " + defaultFilter;
+        if(nSol == 0) {
+            if(NSOLUTIONS == 0) stats += " (no solution)";
+            else if(NSOLUTIONS == 1) stats += " (unique solution)";
+            else stats += " (all solutions)";
+        }
+        else if(nSol == 1) stats += " (while searching for 1 solution)";
+        else stats += " (while searching for " + nSol + " solutions)";
+        stats += "\nCONSTRAINT : " + Constraint.toString(filter);
         return stats+"\n";
     }
 
@@ -505,6 +548,11 @@ public class Model {
         int[][] solutions = new int[this.solutions.size()][];
         for(int s = 0; s < this.solutions.size(); s++) solutions[s] = this.solutions.get(s);
         return solutions;
+    }
+
+    public int[] best(){
+        if(objective != null) return objective.getBestSolution();
+        return this.solutions.get(0);
     }
 
 

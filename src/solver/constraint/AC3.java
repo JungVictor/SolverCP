@@ -1,8 +1,6 @@
-package model.constraint;
+package solver.constraint;
 
-import model.variables.Variable;
-
-import java.util.ArrayList;
+import solver.variables.Variable;
 
 public class AC3 extends Constraint {
 

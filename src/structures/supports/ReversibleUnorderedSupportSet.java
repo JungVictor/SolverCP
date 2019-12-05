@@ -1,8 +1,11 @@
-package structures;
+package structures.supports;
+
+import structures.set.ReversibleSet;
+import structures.set.ReversibleUnorderedSet;
 
 import java.util.*;
 
-public class ReversibleUnorderedSupportSet {
+public class ReversibleUnorderedSupportSet implements ReversibleSupportSet {
 
     private HashMap<Integer, ReversibleUnorderedSet> supports;
     private HashMap<Integer, ArrayList<Integer>> tmp;
@@ -45,7 +48,7 @@ public class ReversibleUnorderedSupportSet {
         this.index = index;
     }
 
-    public ReversibleUnorderedSet getSupports(int key){
+    public ReversibleSet getSupports(int key){
         return this.supports.get(key);
     }
 

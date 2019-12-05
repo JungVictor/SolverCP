@@ -1,12 +1,12 @@
-package structures;
+package structures.set;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.function.Predicate;
 
-public class ReversibleUnorderedSet implements Iterable<Integer> {
+public class ReversibleUnorderedSet implements ReversibleSet {
 
-    private int capacity, save, pointer, tmp;
+    private int capacity, pointer, tmp;
     private int[] list, pointers;
     private ReversibleUnorderedSetIterator iterator;
 
@@ -16,7 +16,6 @@ public class ReversibleUnorderedSet implements Iterable<Integer> {
 
     private ReversibleUnorderedSet(int capacity){
         this.capacity = capacity;
-        this.save = 0;
         this.pointers = new int[capacity];
         this.iterator = new ReversibleUnorderedSetIterator();
     }
@@ -50,13 +49,11 @@ public class ReversibleUnorderedSet implements Iterable<Integer> {
     public void save(int index){
         if(index >= capacity) enlarge(capacity);
         pointers[index] = pointer;
-        save = index;
     }
 
     public void restore(int index){
         if(index == 0) pointer = list.length - 1;
         else pointer = pointers[index];
-        save = index;
     }
 
     /**
@@ -121,7 +118,7 @@ public class ReversibleUnorderedSet implements Iterable<Integer> {
      * Remove the last element of the list
      * @return
      */
-    public int removeLast(){
+    private int removeLast(){
         this.iterator.minus();
         return list[pointer--];
     }
@@ -146,7 +143,7 @@ public class ReversibleUnorderedSet implements Iterable<Integer> {
         return 0 <= tmp && tmp <= pointer;
     }
 
-    public int[] getList(){
+    public int[] copy(){
         return this.list;
     }
 

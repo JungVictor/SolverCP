@@ -1,11 +1,12 @@
-package model.variables;
+package solver.variables;
 
-import model.constraint.expressions.Expression;
-import structures.ReversibleUnorderedSet;
+import tools.expressions.Expression;
+import structures.set.ReversibleSet;
+import structures.set.ReversibleUnorderedSet;
 
 public class Domain {
 
-    private ReversibleUnorderedSet domain;
+    private ReversibleSet domain;
     private int index = 0;
 
     public String toString(){
@@ -13,8 +14,7 @@ public class Domain {
     }
 
     public Domain copy(){
-        Domain copy = new Domain(this.domain.getList());
-        return copy;
+        return new Domain(this.domain.copy());
     }
 
     public void set(int index){
@@ -94,7 +94,7 @@ public class Domain {
         return this.domain.isEmpty();
     }
 
-    public ReversibleUnorderedSet getValues() {
+    public ReversibleSet getValues() {
         return domain;
     }
 }

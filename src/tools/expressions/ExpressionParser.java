@@ -1,7 +1,7 @@
-package model.constraint.expressions;
+package tools.expressions;
 
 import java.util.HashMap;
-import static model.constraint.expressions.Expression.*;
+import static tools.expressions.Expression.*;
 
 public class ExpressionParser {
 
@@ -157,6 +157,10 @@ public class ExpressionParser {
             lastOperator = DIV;
             return expr.split("\\"+DIV, 2);
         }
+        if (expr.contains(POW)){
+            lastOperator = POW;
+            return expr.split("\\"+POW, 2);
+        }
         lastOperator = null;
         return new String[]{expr};
     }
@@ -212,6 +216,24 @@ public class ExpressionParser {
         Expression rExpr = createExpr(right);
         lExpr.simple(); rExpr.simple();
         Expression expression = new Expression(lExpr, comp, rExpr);
+        expression.setBinding(this.binders);
+        return expression;
+    }
+
+    public Expression parse_arith(String expr){
+        // Init
+        this.binders = new HashMap<>();
+        this.bind = 0;
+        this.parenthesisExpressions = new HashMap<>();
+        this.variable_count = 0;
+
+        // Delete useless spaces
+        expr = expr.replace(" ", "");
+        expr = priority_parse(expr);
+
+        // Create the expression for the two subexpressions.
+        Expression expression = createExpr(expr);
+        expression.simple();
         expression.setBinding(this.binders);
         return expression;
     }

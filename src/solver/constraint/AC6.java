@@ -1,16 +1,14 @@
-package model.constraint;
+package solver.constraint;
 
-import model.variables.SupportList;
-import model.variables.Variable;
-import structures.ReversibleUnorderedSet;
-import structures.ReversibleUnorderedSupportSet;
-
-import java.util.ArrayList;
-import java.util.Collection;
+import solver.variables.Delta;
+import solver.variables.Variable;
+import structures.set.ReversibleSet;
+import structures.supports.ReversibleSupportSet;
+import structures.supports.ReversibleUnorderedSupportSet;
 
 public class AC6 extends Constraint {
 
-    private ReversibleUnorderedSupportSet supports;
+    private ReversibleSupportSet supports;
 
     public AC6(Variable x, Variable y, Table table) {
         super(x, y, table);
@@ -26,21 +24,16 @@ public class AC6 extends Constraint {
     }
 
     private void computeSupports(){
-        ArrayList<int[]> tab = table.getTable();
-
         for(int i = 0; i < y.getDomainSize(); i++) supports.addKey(y.getDomainValue(i));
 
-        for(int i = 0; i < tab.size(); i++){
-            int[] t = tab.get(i);
-            supports.put(t[1], t[0]);
-        }
+        for(int[] t : table) supports.put(t[1], t[0]);
 
         supports.build();
     }
 
     @Override
     public boolean filterFrom(Variable v) {
-        ArrayList<Integer> removed = v.getDeltaValues();
+        Delta removed = v.getDelta();
         if(v == x){
             for(int key : supports.keySet()) {
                 if (!supports.isEmpty(key)) for (int rem : removed) {
@@ -53,7 +46,7 @@ public class AC6 extends Constraint {
         else{
             boolean hasSupport = false;
             for(int rem : removed) {
-                ReversibleUnorderedSet supported = supports.getSupports(rem);
+                ReversibleSet supported = supports.getSupports(rem);
                 for (int value : supported) {
                     for (int yVal : v.getDomainValues()) {
                         if (table.isCompatible(value, yVal)) {

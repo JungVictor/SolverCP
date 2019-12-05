@@ -1,14 +1,17 @@
-import model.constraint.expressions.Expression;
-import model.constraint.expressions.ExpressionParser;
+import tools.builders.ExpressionBuilder;
+import tools.expressions.Expression;
+import tools.expressions.ExpressionParser;
 
 public class Test {
 
     public static void main(String[] args){
-        String test = "(1 - 1) * 20 + 20 - 40 + 20 < x";
+        String test = "0^1 < 4";
         ExpressionParser parser = new ExpressionParser();
         Expression expression = parser.parse(test);
 
         System.out.println(expression);
+
+        System.out.println(ExpressionBuilder.sum("var^i", 4));
 
         /*
         Model model = new Model();

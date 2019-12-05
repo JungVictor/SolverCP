@@ -1,8 +1,7 @@
-package model.constraint;
+package solver.constraint;
 
-import model.variables.Variable;
-
-import java.util.ArrayList;
+import solver.variables.Delta;
+import solver.variables.Variable;
 import java.util.HashMap;
 
 public class AC2001 extends Constraint {
@@ -18,9 +17,7 @@ public class AC2001 extends Constraint {
     }
 
     private void computeSupports(){
-        ArrayList<int[]> tab = table.getTable();
-        for(int i = 0; i < tab.size(); i++){
-            int[] t = tab.get(i);
+        for(int[] t : table){
             if(!xSupport.containsKey(t[0])) xSupport.put(t[0], new int[]{t[1], y.indexOf(t[1])});
             if(!ySupport.containsKey(t[1])) ySupport.put(t[1], new int[]{t[0], x.indexOf(t[0])});
         }
@@ -60,7 +57,7 @@ public class AC2001 extends Constraint {
         }
 
         // Removed values from v
-        ArrayList<Integer> removedValues = v.getDelta().getDelta();
+        Delta removedValues = v.getDelta();
 
         for(int removed : removedValues){
             for(int key : v2.getDomainValues()){
