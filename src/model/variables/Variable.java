@@ -2,7 +2,7 @@ package model.variables;
 
 import model.constraint.Constraint;
 import model.constraint.expressions.Expression;
-import structures.UnorderedReversibleList;
+import structures.ReversibleUnorderedSet;
 
 import java.util.ArrayList;
 
@@ -75,7 +75,7 @@ public class Variable implements Comparable<Variable>{
      * Get the values remaining in the domain
      * @return
      */
-    public UnorderedReversibleList getDomainValues(){
+    public ReversibleUnorderedSet getDomainValues(){
         return this.getDomain().getValues();
     }
 
@@ -142,7 +142,6 @@ public class Variable implements Comparable<Variable>{
 
     public void setDepth(int depth){
         this.depth = depth;
-        this.reset();
         this.reset();
         if(!getDomain().isSet()) for(Constraint c : constraints) c.setIndex(depth);
     }

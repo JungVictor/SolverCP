@@ -2,18 +2,20 @@ package model.constraint;
 
 import model.variables.SupportList;
 import model.variables.Variable;
+import structures.ReversibleUnorderedSet;
+import structures.ReversibleUnorderedSupportSet;
 
 import java.util.ArrayList;
 import java.util.Collection;
 
 public class AC6 extends Constraint {
 
-    private SupportList supports;
+    private ReversibleUnorderedSupportSet supports;
 
     public AC6(Variable x, Variable y, Table table) {
         super(x, y, table);
 
-        supports = new SupportList();
+        supports = new ReversibleUnorderedSupportSet();
 
         computeSupports();
     }
@@ -32,6 +34,8 @@ public class AC6 extends Constraint {
             int[] t = tab.get(i);
             supports.put(t[1], t[0]);
         }
+
+        supports.build();
     }
 
     @Override
@@ -49,7 +53,7 @@ public class AC6 extends Constraint {
         else{
             boolean hasSupport = false;
             for(int rem : removed) {
-                Collection<Integer> supported = supports.getSupports(rem);
+                ReversibleUnorderedSet supported = supports.getSupports(rem);
                 for (int value : supported) {
                     for (int yVal : v.getDomainValues()) {
                         if (table.isCompatible(value, yVal)) {

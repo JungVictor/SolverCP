@@ -1,29 +1,45 @@
 package structures;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.function.Predicate;
 
-public class UnorderedReversibleList implements Iterable<Integer> {
+public class ReversibleUnorderedSet implements Iterable<Integer> {
 
     private int capacity, save, pointer, tmp;
     private int[] list, pointers;
-    private UnorderedReversibleListIterator iterator;
+    private ReversibleUnorderedSetIterator iterator;
 
     /**************************
      *  CONSTRUCTORS
      **************************/
 
-    public UnorderedReversibleList(int[] list, int capacity){
+    private ReversibleUnorderedSet(int capacity){
         this.capacity = capacity;
         this.save = 0;
-        this.list = new int[list.length];
-        System.arraycopy(list, 0, this.list, 0, list.length);
         this.pointers = new int[capacity];
-        this.pointer = list.length - 1;
-        this.iterator = new UnorderedReversibleListIterator();
+        this.iterator = new ReversibleUnorderedSetIterator();
     }
 
-    public UnorderedReversibleList(int[] list){
+    public ReversibleUnorderedSet(int[] list, int capacity){
+        this(capacity);
+        this.list = new int[list.length];
+        System.arraycopy(list, 0, this.list, 0, list.length);
+        this.pointer = list.length - 1;
+    }
+
+    public ReversibleUnorderedSet(int[] list){
+        this(list, 20);
+    }
+
+    public ReversibleUnorderedSet(ArrayList<Integer> list, int capacity){
+        this(capacity);
+        this.list = new int[list.size()];
+        for(int i = 0; i < this.list.length; i++) this.list[i] = list.get(i);
+        this.pointer = this.list.length - 1;
+    }
+
+    public ReversibleUnorderedSet(ArrayList<Integer> list){
         this(list, 20);
     }
 
@@ -31,13 +47,16 @@ public class UnorderedReversibleList implements Iterable<Integer> {
      *  GETTERS
      **************************/
 
-    public void save(){
-        if(save+1 >= capacity) enlarge(capacity);
-        pointers[save++] = pointer;
+    public void save(int index){
+        if(index >= capacity) enlarge(capacity);
+        pointers[index] = pointer;
+        save = index;
     }
 
-    public void restore(){
-        pointer = pointers[--save];
+    public void restore(int index){
+        if(index == 0) pointer = list.length - 1;
+        else pointer = pointers[index];
+        save = index;
     }
 
     /**
@@ -147,13 +166,17 @@ public class UnorderedReversibleList implements Iterable<Integer> {
         return removeIndex(tmp);
     }
 
+    public void removeAll(){
+        pointer = -1;
+    }
+
     @Override
     public Iterator<Integer> iterator() {
         iterator.reset();
         return iterator;
     }
 
-    private class UnorderedReversibleListIterator implements Iterator<Integer> {
+    private class ReversibleUnorderedSetIterator implements Iterator<Integer> {
 
         private int index = 0;
 

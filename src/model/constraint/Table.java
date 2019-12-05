@@ -9,6 +9,7 @@ public class Table {
 
     private ArrayList<int[]> table;
     private HashMap<Integer, ArrayList<Integer>> xTable;
+    private ExpressionParser parser = new ExpressionParser();
 
     private static String[] COMP_OP = {">", ">=", "<", "<=", "==", "!="},
             ARITH_OP = {"+", "-", "*", "/"};
@@ -22,25 +23,9 @@ public class Table {
         computeTuples(expr, x, y);
     }
 
-    private ExpressionParser parser = new ExpressionParser();
     public Table(String expr, Variable x, Variable y){
         this();
         computeTuples(parser.parse(expr), x, y);
-    }
-
-    public Table(Variable x, String op, Variable y){
-        this();
-        compare(x, "+", 0, op, y, "+", 0);
-    }
-
-    public Table(Variable x, String op, Variable y, String op2, int cons){
-        this();
-        compare(x, "+", 0, op, y, op2, cons);
-    }
-
-    public Table(Variable x, String op, int cons1, String op2, Variable y, String op3, int cons2){
-        this();
-        compare(x, op, cons1, op2, y, op3, cons2);
     }
 
     public Table(){
@@ -67,57 +52,6 @@ public class Table {
 
     private void addToTable(int xVal, int yVal){
         table.add(new int[]{xVal, yVal});
-    }
-
-    private boolean in(String symbol, String[] symbol_table){
-        for(String s : symbol_table) if(s.equals(symbol)) return true;
-        return false;
-    }
-
-    private int eval(int v1, String op, int v2){
-        if (op.equals("*")) return v1 * v2;
-        else if (op.equals("/")) return v1 / v2;
-        else if (op.equals("+")) return v1 + v2;
-        else return v1 - v2;
-    }
-
-
-
-    private boolean check(int xVal, String op, int cons1, String op2, int yVal, String op3, int cons2){
-        int left, right;
-        String compare;
-
-        if(in(op, COMP_OP)){
-            compare = op;
-            left = xVal;
-            if(op3.equals("+") || op3.equals("-")) right = eval(eval(cons1, op2, yVal), op3, cons2);
-            else right = eval(cons1, op2, eval(yVal, op3, cons2));
-        } else if(in(op2, COMP_OP)){
-            compare = op2;
-            left = eval(xVal, op, cons1);
-            right = eval(yVal, op3, cons2);
-        } else {
-            compare = op3;
-            if(op2.equals("+") || op2.equals("-")) left = eval(eval(xVal, op, cons1), op2, yVal);
-            else left = eval(xVal, op, eval(cons1, op2, yVal));
-            right = cons2;
-        }
-
-        if(compare.equals("<")) return left < right;
-        if(compare.equals("<=")) return left <= right;
-        if(compare.equals(">")) return left > right;
-        if(compare.equals(">=")) return left >= right;
-        if(compare.equals("==")) return left == right;
-        if(compare.equals("!=")) return left != right;
-
-        return false;
-    }
-
-    private void compare(Variable x, String op, int cons1, String op2, Variable y, String op3, int cons2){
-
-        for(int xVal : x.getDomainValues()) for(int yVal : y.getDomainValues()) if(check(xVal, op, cons1, op2, yVal, op3, cons2)) addToTable(xVal, yVal);
-
-        computeHashTable();
     }
 
     private void computeTuples(Expression expr, Variable x, Variable y){

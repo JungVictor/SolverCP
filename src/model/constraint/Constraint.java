@@ -5,8 +5,8 @@ public abstract class Constraint {
 
     public static final String AC3 = "AC3", AC4 = "AC4", AC6 = "AC6", AC2001 = "AC2001";
 
-    protected Variable x, y;
-    protected Table table;
+    Variable x, y;
+    Table table;
     protected int index;
 
     public Table getTable(){

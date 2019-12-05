@@ -23,6 +23,8 @@ public class GolombRuler {
 
         //////////////
         // CONSTRAINTS
+        model.addConstraint("var[0] = 0", variables[0]);
+
         model.allDifferent(variables);
         model.allDifferent(diff);
 
@@ -33,8 +35,6 @@ public class GolombRuler {
 
         for(int i =0; i < N-1; i++)
             model.addConstraint("var[i] < var[j]", variables[i], variables[i+1]);
-
-        model.addConstraint("var[0] = 0", variables[0]);
 
         //////////////////////
         // SOLVER'S PARAMETERS

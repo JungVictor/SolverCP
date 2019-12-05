@@ -1,11 +1,11 @@
 package model.variables;
 
 import model.constraint.expressions.Expression;
-import structures.UnorderedReversibleList;
+import structures.ReversibleUnorderedSet;
 
 public class Domain {
 
-    private UnorderedReversibleList domain;
+    private ReversibleUnorderedSet domain;
     private int index = 0;
 
     public String toString(){
@@ -22,15 +22,15 @@ public class Domain {
     }
 
     public Domain(int[] values){
-        this.domain = new UnorderedReversibleList(values);
-        this.domain.save();
+        this.domain = new ReversibleUnorderedSet(values);
+        this.domain.save(0);
     }
 
     public Domain(int lb, int ub){
         int[] dom = new int[ub-lb+1];
         for(int i = 0; i < dom.length; i++) dom[i] = lb+i;
-        this.domain = new UnorderedReversibleList(dom);
-        this.domain.save();
+        this.domain = new ReversibleUnorderedSet(dom);
+        this.domain.save(0);
     }
 
     public boolean filter(Expression expression){
@@ -60,15 +60,14 @@ public class Domain {
         return this.domain.contains(a);
     }
 
-    public void restore() {
-        domain.restore();
+    public void restore(int index) {
+        domain.restore(index);
     }
 
     public void setIndex(int index){
-        if(this.index < index) domain.save();
+        if(this.index < index) domain.save(index);
         else {
-            restore();
-            if(this.index == index) domain.save();
+            restore(index);
         }
         this.index = index;
     }
@@ -95,7 +94,7 @@ public class Domain {
         return this.domain.isEmpty();
     }
 
-    public UnorderedReversibleList getValues() {
+    public ReversibleUnorderedSet getValues() {
         return domain;
     }
 }
