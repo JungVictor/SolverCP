@@ -30,8 +30,8 @@ _Contrainte simple où variable[0] < variable[1]_
 L'association symbole -> variable se fait automatiquement. Pour plus de précision, voir la partie sur la classe Expression.  
 Quelques exemples un peu plus foufous :
 
-`model.addConstraint("(| x - y | + 5) % 5", var[0], var[1]);  `
-`model.addConstraint("x^2 + y + z * (5 * (a + b))", v[0], v[1], v[2], v[3], v[4]);`
+`model.addConstraint("(| x - y | + 5) % 5", var[0], var[1]);`  
+`model.addConstraint("x^2 + y + z * (5 * (a + b))", v[0], v[1], v[2], v[3], v[4]);`  
 `model.addConstraint("x = 0", variables[0]);`
 
 ### 4. Définir les variables de décisions
