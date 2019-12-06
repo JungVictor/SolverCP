@@ -1,7 +1,4 @@
 package solver.constraint;
-import tools.expressions.Expression;
-import tools.builders.ExpressionBuilder;
-import solver.variables.Variable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -16,29 +13,9 @@ public class Table implements Iterable<int[]>{
      * CREATING A TABLE *
      ********************/
 
-    public Table(Expression expr, Variable x, Variable y){
-        this();
-        computeTuples(expr, x, y);
-    }
-
-    public Table(String expr, Variable x, Variable y){
-        this();
-        computeTuples(ExpressionBuilder.create(expr), x, y);
-    }
-
     public Table(){
         this.table = new ArrayList<>();
         this.iterator = new TableIterator();
-    }
-
-    public Table(ArrayList<int[]> table){
-        this();
-        add(table);
-    }
-
-    public Table(int[][] tuples){
-        this();
-        add(tuples);
     }
 
     public void computeHashTable(){
@@ -49,57 +26,12 @@ public class Table implements Iterable<int[]>{
         }
     }
 
-    private void addToTable(int xVal, int yVal){
-        table.add(new int[]{xVal, yVal});
-    }
-
-    private void computeTuples(Expression expr, Variable x, Variable y){
-
-        for(int xVal : x.getDomainValues()) for(int yVal : y.getDomainValues()) if(expr.eval(xVal, yVal)) addToTable(xVal, yVal);
-        computeHashTable();
-    }
-
-    /***********************
-     * OPERATION ON TABLES *
-     ***********************/
-
-    public Table intersection(Table t){
-        Table res = new Table();
-        for(int i = 0; i < table.size(); i++){
-            int[] tuple1 = table.get(i);
-            for(int j = 0; j < t.getTable().size(); j++){
-                int[] tuple2 = t.getTuple(j);
-                if(tuple1[0] == tuple2[0] && tuple1[1] == tuple2[1]) res.add(tuple1);
-            }
-        }
-        res.computeHashTable();
-        return res;
-    }
-
-    public Table union(Table t){
-        Table res = new Table();
-        res.add(this.getTable());
-        res.add(t.getTable());
-        res.computeHashTable();
-        return res;
-    }
-
     /*******************************
      * ADD AN ELEMENT TO THE TABLE *
      *******************************/
 
-    public void add(ArrayList<int[]> tables){
-        this.table.addAll(tables);
-        computeHashTable();
-    }
-
     public void add(int[] tuple){
         this.table.add(tuple);
-    }
-
-    public void add(int[][] table){
-        for(int[] tuple : table) add(tuple);
-        computeHashTable();
     }
 
     public void add(int x, int y){

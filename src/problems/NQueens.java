@@ -1,8 +1,8 @@
 package problems;
 
-import solver.Model;
 import solver.variables.Variable;
 import tools.ArgumentReader;
+import solver.Model;
 
 public class NQueens {
 

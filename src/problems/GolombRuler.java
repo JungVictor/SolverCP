@@ -1,10 +1,8 @@
 package problems;
 
 import solver.Model;
-import solver.constraint.Constraint;
 import solver.variables.Variable;
 import tools.ArgumentReader;
-import tools.builders.ExpressionBuilder;
 
 public class GolombRuler {
 

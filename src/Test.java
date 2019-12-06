@@ -10,7 +10,6 @@ public class Test {
         Expression expression = parser.parse(test);
 
         System.out.println(expression);
-
         System.out.println(ExpressionBuilder.sum("var^i", 4));
 
         /*

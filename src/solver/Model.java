@@ -1,18 +1,23 @@
 package solver;
 
-import solver.constraint.*;
-import tools.Logger;
-import tools.builders.ConstraintBuilder;
-import tools.expressions.Expression;
-import tools.builders.ExpressionBuilder;
-import tools.expressions.ExpressionParser;
+import solver.constraint.couples.Couple;
+import solver.constraint.Constraint;
+import solver.constraint.Table;
+import solver.constraint.couples.NCouple;
 import solver.variables.Domain;
 import solver.variables.Propagation;
 import solver.variables.Variable;
+import tools.Logger;
+import tools.builders.ConstraintBuilder;
+import tools.builders.ExpressionBuilder;
+import tools.expressions.Expression;
 import tools.expressions.Objective;
 
 import java.time.Clock;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 
 public class Model {
 
@@ -21,23 +26,17 @@ public class Model {
     private long time;
     private long construction;
 
-    // UTIL
-    private ExpressionParser parser = new ExpressionParser();   // Parser of expressions
-
     // MODEL
-    private Propagation propagation;                // The propagation object
-    private ArrayList<Variable> variables;          // All the variables + the one generated (n-ary variables)
-    private ArrayList<Variable> staticVariables;    // All the "base" variables (for which to output a solution)
+    private Propagation propagation;
+    private ArrayList<Variable> allVariables, decisionVariables;
     private int filter = Constraint.AC3;  // Default filter used
     private Objective objective;
 
-    private HashMap<String, Expression> expressions;
-
     // CONSTRAINTS
-    private HashMap<Variable, HashMap<Variable, Table>> constraints;    // All constraint's tables (binary)
-    private HashMap<Variable, ArrayList<Variable>> addedConstraints;    // All new variables (n-ary)
-    private HashMap<Variable, ArrayList<Expression>> addedExpressions;  // All n-ary expressions
-    private HashMap<Variable, ArrayList<Expression>> filterExpression;
+    private HashMap<Variable, ArrayList<Expression>> unaryConstraints;
+    private HashSet<Couple> binaryConstraints;
+    private HashSet<NCouple> naryConstraints;
+    private HashMap<String, Expression> expressions;
 
     // INFORMATIONS
     private boolean status = false;         // Is there a solution ?
@@ -48,17 +47,22 @@ public class Model {
 
     public Model(){
         this.propagation = new Propagation();
-        this.variables = new ArrayList<>();
-        this.staticVariables = new ArrayList<>();
-        this.solutions = new ArrayList<>();
-        this.constraints = new HashMap<>();
-        this.addedConstraints = new HashMap<>();
-        this.addedExpressions = new HashMap<>();
-        this.filterExpression = new HashMap<>();
+
+        this.allVariables = new ArrayList<>();
+        this.decisionVariables = new ArrayList<>();
+
         this.expressions = new HashMap<>();
+
+        this.unaryConstraints = new HashMap<>();
+        this.binaryConstraints = new HashSet<>();
+        this.naryConstraints = new HashSet<>();
+
+        this.solutions = new ArrayList<>();
+
         this.clock = Clock.systemDefaultZone();
         construction = clock.millis();
     }
+
 
     public void setFilter(int filter){
         this.filter = filter;
@@ -98,7 +102,7 @@ public class Model {
      */
     public Variable addVariable(Domain domain){
         Variable v = new Variable(domain, propagation);
-        this.variables.add(v);
+        this.allVariables.add(v);
         return v;
     }
 
@@ -154,208 +158,65 @@ public class Model {
         return addVariables(n, new Domain(values));
     }
 
+    // TODO : comment
+    public void decisionVariable(Variable v){
+        this.decisionVariables.add(v);
+    }
+    public void decisionVariables(Variable[] variables){
+        Collections.addAll(decisionVariables, variables);
+    }
+
     /**************************************************
      * ADD A CONSTRAINT TO THE MODEL (UNDER THE HOOD) *
      **************************************************/
 
-    /**
-     * Check if there exists a constraint between two variables
-     * @param x Variable
-     * @param y Variable
-     * @return true if there exists a constraint between x and y, false otherwise.
-     */
-    private boolean existsConstraint(Variable x, Variable y){
-        return constraints.containsKey(x) && constraints.get(x).containsKey(y);
+    private Expression getExpression(final String expression){
+        if(expressions.containsKey(expression)) return expressions.get(expression);
+        final Expression e = ExpressionBuilder.create(expression);
+        expressions.put(expression, e);
+        return e;
     }
 
-    /**
-     * Get the table of the constraint between two variables.
-     * @param x Variable
-     * @param y Variable
-     * @return Table of feasible tuples
-     */
-    private Table getConstraintTable(Variable x, Variable y){
-        if(existsConstraint(x, y)) return constraints.get(x).get(y);
-        else return null;
-    }
-
-    /**
-     * Add a constraint to the map of constraints between two variables
-     * @param x Variable
-     * @param y Variable
-     * @param table Table of feasible tuples
-     */
-    private void addConstraintToMap(Variable x, Variable y, Table table){
-        if(constraints.containsKey(x)){
-            Table t = getConstraintTable(x, y);
-            if(t == null) {
-                if(constraints.containsKey(y)) t = getConstraintTable(y, x);
-                if(t == null) constraints.get(x).put(y, table);
-                else constraints.get(y).put(x, table);
-            }
-            else constraints.get(x).put(y, table.intersection(t));
-        } else {
-            if(constraints.containsKey(y)){
-                System.out.println("wow");
-                Table t = getConstraintTable(y, x);
-                if(t == null) constraints.get(y).put(x, table);
-                else constraints.get(y).put(x, table.intersection(t));
-            } else {
-                HashMap<Variable, Table> hashmap = new HashMap<>();
-                hashmap.put(y, table);
-                constraints.put(x, hashmap);
-            }
-        }
-    }
-
-    /************************************
-     * N-ARITY CONSTRAINTS CONSTRUCTION *
-     ************************************/
-
-    /**
-     * Check if there already exists a constraint for a given set of variables.
-     * @param variables
-     * @return Variable v if it exists, null otherwise.
-     */
-    private Variable getFakeVariable(Variable... variables){
-        boolean found = true;
-        for(Variable key : this.addedConstraints.keySet()){
-            for(Variable v : variables)
-                if(!this.addedConstraints.get(key).contains(v)) found = false;
-            if(found && this.addedConstraints.get(key).size() == variables.length) return key;
-            found = true;
-        }
-        return null;
-    }
-
-    private void filter(){
-        for(Variable v : filterExpression.keySet())
-            for(Expression e : filterExpression.get(v)) v.filter(e);
-    }
-
-    /**
-     * Build the table for each "fake" variables and add them to the model.
-     */
-    private void buildTables() {
-        for(Variable fake : addedExpressions.keySet()) {
-            ArrayList<Variable> variables = addedConstraints.get(fake);
-            ArrayList<int[]> tuples = computeTuples(addedExpressions.get(fake), variables);
-
-            int size = tuples.size();
-            Table[] tables = new Table[variables.size()];
-
-            for (int i = 0; i < variables.size(); i++) tables[i] = new Table();
-            fake = new Variable(new Domain(0, size - 1), propagation);
-
-            for (int i = 0; i < size; i++)
-                for (int j = 0; j < variables.size(); j++) tables[j].add(tuples.get(i)[j], i);
-
-            for (int i = 0; i < variables.size(); i++) {
-                tables[i].computeHashTable();
-                addConstraint(variables.get(i), fake, tables[i]);
-            }
-            this.variables.add(fake);
-        }
-    }
-
-    /**
-     * Compute every feasible tuples for a given set of expressions and a given set of variables.
-     * @param expressions List of expressions to check
-     * @param variables List of variables
-     * @return The list of feasibles tuples.
-     */
-    private ArrayList<int[]> computeTuples(ArrayList<Expression> expressions, ArrayList<Variable> variables){
-        ArrayList<int[]> tuples = new ArrayList<>();
-
-        int[] counts = new int[variables.size()];
-        int[] values = new int[variables.size()];
-        int index = 0;
-
-        while(true) {
-            if (index == 0 && counts[index] == variables.get(0).getDomainSize()) return tuples;
-            if (index == variables.size()) {
-                boolean find = true;
-                for(Expression expression : expressions) if(find && !expression.eval(values)) find = false;
-                if (find) {
-                    int[] new_values = new int[values.length];
-                    System.arraycopy(values, 0, new_values, 0, values.length);
-                    tuples.add(new_values);
-                }
-                index--;
-            }
-            if (index < 0) return tuples;
-            if (counts[index] >= variables.get(index).getDomainSize()) {
-                counts[index] = 0;
-                index--;
-            } else {
-                values[index] = variables.get(index).getDomainValue(counts[index]);
-                counts[index] += 1;
-                index++;
-            }
-        }
-    }
-
-    /********************************************
-     * ADD A CONSTRAINT TO THE MODEL (FOR USER) *
-     ********************************************/
-
-    /**
-     * Add a constraint between two variables to the model
-     * @param x Variable
-     * @param y Variable
-     * @param table Table of feasible tuples
-     */
-    public void addConstraint(Variable x, Variable y, Table table){
-        addConstraintToMap(x, y, table);
-    }
-
-    public void addConstraint(Expression expression, Variable... variables){
-        if(variables.length == 1) {
-            if(expression.nVar() != 1) return;
-            if(!filterExpression.containsKey(variables[0])) filterExpression.put(variables[0], new ArrayList<>());
-            filterExpression.get(variables[0]).add(expression);
-        }
-        if(variables.length == 2) addConstraint(variables[0], variables[1], new Table(expression, variables[0], variables[1]));
-        else{
-            Variable fake = getFakeVariable(variables);
-            if(fake == null) {
-                fake = new Variable(new Domain(0, 0), propagation);
-
-                ArrayList<Variable> variableArrayList = new ArrayList<>(Arrays.asList(variables));
-
-                this.addedConstraints.put(fake, variableArrayList);
-                this.addedExpressions.put(fake, new ArrayList<>());
-            }
-            this.addedExpressions.get(fake).add(expression);
-        }
-    }
-
-    /**
-     * Add a constraint between any number of variables according to the given expression.
-     * @param expression String representing a mathematical constraint
-     * @param variables Variables binded to the formula
-     */
     public void addConstraint(String expression, Variable... variables){
-        Expression expr = this.expressions.get(expression);
-        if(expr == null) {
-            expr = ExpressionBuilder.create(expression);
-            this.expressions.put(expression, expr);
-        }
-        addConstraint(expr, variables);
+        if(variables.length == 0) return;
+        if(variables.length == 1) addUnaryConstraint(getExpression(expression), variables[0]);
+        else if(variables.length == 2) addBinaryConstraint(getExpression(expression), variables[0], variables[1]);
+        else addNaryConstraint(getExpression(expression), variables);
     }
 
-    /**
-     * Add the All Different constraint to each variable.
-     * @param variables
-     * @return
-     */
-    public ArrayList<Constraint> allDifferent(Variable... variables){
-        ArrayList<Constraint> constraints = new ArrayList<>();
+    public void allDifferent(Variable... variables){
         for(int i = 0; i < variables.length; i++)
             for(int j = i+1; j < variables.length; j++)
                 addConstraint("x != y", variables[i], variables[j]);
-        return constraints;
     }
+
+    private void addUnaryConstraint(Expression expression, Variable v){
+        if(!unaryConstraints.containsKey(v)) unaryConstraints.put(v, new ArrayList<>());
+        unaryConstraints.get(v).add(expression);
+    }
+
+    private void addBinaryConstraint(Expression expression, Variable x, Variable y){
+        for(Couple couple : binaryConstraints) {
+            if(couple.equals(x, y)) {
+                couple.addExpression(x, y, expression);
+                return;
+            }
+        }
+        Couple couple = new Couple(x, y, expression);
+        this.binaryConstraints.add(couple);
+    }
+
+    private void addNaryConstraint(Expression expression, Variable... variables){
+        for(NCouple couple : naryConstraints){
+            if(couple.equals(variables)){
+                couple.addExpression(expression, variables);
+                return;
+            }
+        }
+        NCouple couple = new NCouple(expression, variables);
+        this.naryConstraints.add(couple);
+    }
+
 
     /**
      * Add the actual constraint to the model.
@@ -365,43 +226,26 @@ public class Model {
      * @return
      */
     private Constraint buildConstraint(Variable x, Variable y, Table table){
-        return ConstraintBuilder.constraint(x, y, table, filter);
+        return ConstraintBuilder.constraint(x, y, table, 0);
     }
 
+    private void build(){
+        // Unary constraints (=> domain filtering)
+        for(Variable v : unaryConstraints.keySet())
+           for(Expression expression : unaryConstraints.get(v))
+               v.filter(expression);
 
-    /**************************
-     * ORDERING THE VARIABLES *
-     **************************/
+        // Binary constraints
+        for(Couple couple : binaryConstraints)
+            buildConstraint(couple.getX(), couple.getY(), couple.build());
 
-    public void decisionVariable(Variable v){
-        this.staticVariables.add(v);
-    }
-
-    public void decisionVariables(Variable[] variables){
-        Collections.addAll(staticVariables, variables);
-    }
-
-    /**
-     * Sort all variables
-     */
-    private void orderVariables(){
-        Collections.sort(variables);
-    }
-
-    /**
-     * Sort all variables from index to the end.
-     * @param index
-     */
-    private void orderVariables(int index){
-        ArrayList<Variable> v1 = new ArrayList<>(variables);
-        ArrayList<Variable> v2 = new ArrayList<>();
-        for(int i = 0; i < index; i++) {
-            v1.remove(0);
-            v2.add(variables.get(i));
+        // N-ary constraints
+        for(NCouple couple : naryConstraints){
+           Table[] tables = couple.build();
+           Variable fake = addVariable(0, couple.getSize() - 1);
+           for(int i = 0; i < tables.length; i++)
+                buildConstraint(fake, couple.getVariable(i), tables[i]);
         }
-        Collections.sort(v1);
-        v2.addAll(v1);
-        variables = v2;
     }
 
     /****************************
@@ -424,6 +268,7 @@ public class Model {
         this.DEBUG = debug;
     }
 
+
     /**
      * Solve the model.
      * @return true if there is at least one solution, false otherwise.
@@ -435,23 +280,20 @@ public class Model {
         NSOLUTIONS = 0;
         int index = 0;
 
-        buildTables();
-        filter();
+        build();
 
-        for(Variable x : constraints.keySet())
-            for(Variable y : constraints.get(x).keySet())
-                buildConstraint(x, y, constraints.get(x).get(y));
+        if(decisionVariables.size() == 0) decisionVariables = allVariables;
 
         time = clock.millis();
         construction = time - construction;
 
         while(true){
-            if(index == staticVariables.size()){
+            if(index == decisionVariables.size()){
                 status = true;
                 index--;
                 solutions.add(solution());
                 if(objective != null) objective.keepBest(solutions.get(NSOLUTIONS));
-                staticVariables.get(index).reset();
+                decisionVariables.get(index).reset();
                 NSOLUTIONS++;
                 if(DEBUG) Logger.debug("solution");
                 if(NSOLUTIONS == nSol) {
@@ -460,16 +302,14 @@ public class Model {
                 }
             }
 
-            for(Variable v : variables) v.setDepth(index);
+            for(Variable v : allVariables) v.setDepth(index);
 
-            //orderVariables(index);
-
-            Variable v = staticVariables.get(index);
+            Variable v = decisionVariables.get(index);
             if(DEBUG) {
                 Logger.println("\n---------------------------");
                 Logger.println("DEPTH = " + index);
                 Logger.println("---------------------------");
-                for (int i = 0; i < variables.size(); i++) Logger.println(i + " " + variables.get(i).toString_());
+                for (int i = 0; i < allVariables.size(); i++) Logger.println(i + " " + allVariables.get(i).toString_());
             }
 
             if(v.setFirst()) {
@@ -478,13 +318,13 @@ public class Model {
 
                     if(DEBUG) {
                         Logger.println("---------------------------");
-                        for (int i = 0; i < variables.size(); i++) Logger.println(i + " " + variables.get(i).toString_());
+                        for (int i = 0; i < allVariables.size(); i++) Logger.println(i + " " + allVariables.get(i).toString_());
                     }
                     index++;
                 }
                 else {
                     FAILS++;
-                    for(Variable var : variables) var.resetDelta();
+                    for(Variable var : allVariables) var.resetDelta();
                     if(DEBUG) Logger.println(index + " set to " + v.getDomain().getValue(0) + " : fail");
                 }
             } else {
@@ -493,7 +333,7 @@ public class Model {
                     return status;
                 }
                 else {
-                    for(int i = index; i < staticVariables.size(); i++) staticVariables.get(i).resetChoices();
+                    for(int i = index; i < decisionVariables.size(); i++) decisionVariables.get(i).resetChoices();
                     index--;
                     BACKTRACKS++;
                 }
@@ -539,8 +379,8 @@ public class Model {
     }
 
     private int[] solution(){
-        int[] solution = new int[staticVariables.size()];
-        for(int i = 0; i < staticVariables.size(); i++) solution[i] = staticVariables.get(i).getDomain().getValue(0);
+        int[] solution = new int[decisionVariables.size()];
+        for(int i = 0; i < decisionVariables.size(); i++) solution[i] = decisionVariables.get(i).getDomain().getValue(0);
         return solution;
     }
 
@@ -554,7 +394,4 @@ public class Model {
         if(objective != null) return objective.getBestSolution();
         return this.solutions.get(0);
     }
-
-
-
 }
