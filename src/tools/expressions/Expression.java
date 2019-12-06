@@ -100,13 +100,13 @@ public class Expression {
             if(right.left == null || right.right == null) return;
             if(right.left.nVar == 0) {
                 if((operator.equals(PLUS) || operator.equals(MINUS)) && (right.operator.equals(MULT) || right.operator.equals(DIV))) return;
-                if((right.operator.equals(MODULO))) return;
+                if((right.operator.equals(MODULO)) || right.operator.equals(POW)) return;
                 value = localEvaluation(left.constant, operator, right.left.constant);
                 this.left = new Expression(value);
                 this.right = right.right;
             } else if(right.right.nVar == 0){
                 if((operator.equals(PLUS) || operator.equals(MINUS)) && (right.operator.equals(MULT) || right.operator.equals(DIV))) return;
-                if((right.operator.equals(MODULO))) return;
+                if((right.operator.equals(MODULO)) || right.operator.equals(POW)) return;
                 value = localEvaluation(left.constant, operator, localEvaluation(right.neutralValue(), right.operator, right.right.constant));
                 this.left = new Expression(value);
                 this.right = right.left;
@@ -117,14 +117,14 @@ public class Expression {
 
             if(left.left.nVar == 0) {
                 if((operator.equals(PLUS) || operator.equals(MINUS)) && (left.operator.equals(MULT) || left.operator.equals(DIV))) return;
-                if((left.operator.equals(MODULO))) return;
+                if((left.operator.equals(MODULO)) || left.operator.equals(POW)) return;
                 value = localEvaluation(left.left.constant, operator, right.constant);
                 this.operator = left.operator;
                 this.right = left.right;
                 this.left = new Expression(value);
             } else if(left.right.nVar == 0){
                 if((operator.equals(PLUS) || operator.equals(MINUS)) && (left.operator.equals(MULT) || left.operator.equals(DIV))) return;
-                if((left.operator.equals(MODULO))) return;
+                if((left.operator.equals(MODULO)) || left.operator.equals(POW)) return;
                 value = localEvaluation(localEvaluation(left.neutralValue(), left.operator, left.right.constant), operator, right.constant);
                 this.left = left.left;
                 this.right = new Expression(value);
@@ -180,6 +180,7 @@ public class Expression {
 
             if(left.isLeaf()) {
                 variable = left.variable;
+                constant = left.constant;
                 left = null;
             } else {
                 this.right = this.left.right;
@@ -187,12 +188,13 @@ public class Expression {
                 this.left = this.left.left;
             }
 
-        } else if(right.nVar == 0 && right.constant == neutralValue()){
+        } else if(right.nVar == 0 && right.constant == neutralValue() && !operator.equals(POW)){
             this.operator = null;
             this.right = null;
 
             if(left.isLeaf()) {
                 variable = left.variable;
+                constant = left.constant;
                 left = null;
             } else {
                 this.right = this.left.right;

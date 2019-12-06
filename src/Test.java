@@ -1,16 +1,15 @@
 import tools.builders.ExpressionBuilder;
 import tools.expressions.Expression;
 import tools.expressions.ExpressionParser;
+import static tools.builders.ExpressionBuilder.*;
 
 public class Test {
 
     public static void main(String[] args){
-        String test = "0^1 < 4";
-        ExpressionParser parser = new ExpressionParser();
-        Expression expression = parser.parse(test);
+        System.out.println(ExpressionBuilder.sequence("var + var", "+", 3));
+        System.out.println(sum("var^2 + x", 3));
 
-        System.out.println(expression);
-        System.out.println(ExpressionBuilder.sum("var^i", 4));
+        System.out.println(ExpressionBuilder.create("1*1 < 5"));
 
         /*
         Model model = new Model();

@@ -6,52 +6,69 @@ import java.util.ArrayList;
 
 public class Objective {
 
-    private Expression objective;
-    private Variable[] variables;
-    private int[] best_solution, values;
-    private int best_value, last_value;
-    private boolean minimize;
+    private ArrayList<Expression> objectives;
+    private ArrayList<Variable[]> variables;
+    private ArrayList<Integer> best_values;
+    private int[] best_solution, values, last_value;
+    private ArrayList<Boolean> minimize;
 
     private static final int MINF = Integer.MIN_VALUE, PINF = Integer.MAX_VALUE;
 
-    public Objective(){}
+    public Objective(){
+        this.objectives = new ArrayList<>();
+        this.variables = new ArrayList<>();
+        this.best_values = new ArrayList<>();
+        this.minimize = new ArrayList<>();
+    }
 
     public void minimize(final Expression expression, final Variable[] variables){
-        minimize = true;
-        best_value = PINF;
-        objective = expression;
-        this.variables = variables;
-        this.values = new int[variables.length];
+        minimize.add(true);
+        best_values.add(PINF);
+        objectives.add(expression);
+        this.variables.add(variables);
     }
 
     public void maximize(final Expression expression, final Variable[] variables){
-        minimize = false;
-        best_value = MINF;
-        objective = expression;
-        this.variables = variables;
-        this.values = new int[variables.length];
+        minimize.add(false);
+        best_values.add(MINF);
+        objectives.add(expression);
+        this.variables.add(variables);
     }
 
-    public int eval(){
-        for(int i = 0; i < variables.length; i++) values[i] = variables[i].getDomainValue(0);
-        last_value = objective.eval_int(values);
+    public int[] eval(){
+        last_value = new int[variables.size()];
+        for(int i = 0; i < variables.size(); i++) {
+            values = new int[variables.get(i).length];
+            for(int j = 0; j < variables.get(i).length; j++)
+                values[j] = variables.get(i)[j].getDomainValue(0);
+            last_value[i] = objectives.get(i).eval_int(values);
+        }
         return last_value;
     }
 
-    public void keepBest(int ... values){
-        if(eval() > best_value){
-            if(!minimize){
-                best_value = last_value;
-                best_solution = values;
-            }
-        } else if(minimize){
-            best_value = last_value;
-            best_solution = values;
-        }
+    private void save(int[] all_variables){
+        best_values = new ArrayList<>();
+        for (int value : last_value) best_values.add(value);
+        best_solution = all_variables;
     }
 
-    public int getBestValue(){
-        return best_value;
+    public void keepBest(int[] all_variables){
+        eval();
+        for(int i = 0; i < last_value.length; i++){
+            if(minimize.get(i)){
+                if(last_value[i] > best_values.get(i)) return;  // Worse
+                if(last_value[i] < best_values.get(i)){         // Better
+                    save(all_variables);
+                    return;
+                }
+            } else {
+                if(last_value[i] < best_values.get(i)) return; // Worse
+                if(last_value[i] > best_values.get(i)){
+                    save(all_variables);
+                    return;
+                }
+            }
+        }
     }
 
     public int[] getBestSolution(){

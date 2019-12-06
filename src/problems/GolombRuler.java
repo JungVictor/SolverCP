@@ -3,6 +3,7 @@ package problems;
 import solver.Model;
 import solver.variables.Variable;
 import tools.ArgumentReader;
+import tools.builders.ExpressionBuilder;
 
 public class GolombRuler {
 
@@ -22,8 +23,8 @@ public class GolombRuler {
 
         ////////////
         // VARIABLES
-        Variable[] diff = model.addVariables(F, 0, UB);
         Variable[] variables = model.addVariables(N, 0, UB);
+        Variable[] diff = model.addVariables(F, 0, UB);
 
         model.decisionVariables(variables);
         //////////////
@@ -50,14 +51,16 @@ public class GolombRuler {
 
         //////////////////////
         // SOLVER'S PARAMETERS
-
         model.setFilter(reader.get("-c"));
         model.lookingForSolution(Integer.parseInt(reader.get("-sol")));
         model.setDebugMode(Boolean.parseBoolean(reader.get("-debug")));
 
         //////////////////
         // SOLVING PROBLEM
-        if(Boolean.parseBoolean(reader.get("-opti"))) model.minimize("var[n]", variables[N-1]);
+        if(Boolean.parseBoolean(reader.get("-opti"))) {
+            // Minimize all variables, priority from end to start
+            for(int i = N-1; i >= 0; i--) model.minimize("var[i]", variables[i]);
+        }
         model.solve();
 
         ///////////////////////

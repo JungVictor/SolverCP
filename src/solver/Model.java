@@ -58,6 +58,7 @@ public class Model {
         this.naryConstraints = new HashSet<>();
 
         this.solutions = new ArrayList<>();
+        this.objective = new Objective();
 
         this.clock = Clock.systemDefaultZone();
         construction = clock.millis();
@@ -72,22 +73,18 @@ public class Model {
     }
 
     public void minimize(Expression expression, Variable... variables){
-        this.objective = new Objective();
         objective.minimize(expression, variables);
     }
 
     public void minimize(String expression, Variable... variables){
-        this.objective = new Objective();
         objective.minimize(ExpressionBuilder.create_arith(expression), variables);
     }
 
     public void maximize(Expression expression, Variable... variables){
-        this.objective = new Objective();
         objective.maximize(expression, variables);
     }
 
     public void maximize(String expression, Variable... variables){
-        this.objective = new Objective();
         objective.maximize(ExpressionBuilder.create_arith(expression), variables);
     }
 

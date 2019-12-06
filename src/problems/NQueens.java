@@ -16,7 +16,6 @@ public class NQueens {
         int N = Integer.parseInt(reader.get("-n"));
 
         Variable[] queens = model.addVariables(N, 1, N);
-        model.decisionVariables(queens);
 
         model.allDifferent(queens);
         for(int i = 0; i < N-1; i++){
