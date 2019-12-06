@@ -135,6 +135,13 @@ Si l'expression est une opération, alors l'évaluation renvoit un entier.
 Appeler `eval_int` ou `create_arith` sur une expression qui est une comparaison provoque une erreur.  
 De même, `eval` ou `create` sur une Expression qui n'est pas une comparaison provoque une erreur.
 
+#### Opérateurs disponibles
+Il est possible de changer les symboles dans la classe Expression.
+- Comparaison : `<`, `<=`, `>`, `>=`, `=`, `!=`
+- Opération : `+`, `-`, `*`, `/`, `%`, `^`
+- Spécial : `(`, `)`, `|` (valeur absolue)
+
+
 ### ExpressionBuider
 ExpressionBuilder permet de construire des expressions sans se soucier de l'implémentation.
 Cette classe dispose de 4 fonctions seulement.  
