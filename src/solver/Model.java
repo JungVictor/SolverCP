@@ -162,6 +162,9 @@ public class Model {
     public void decisionVariables(Variable[] variables){
         Collections.addAll(decisionVariables, variables);
     }
+    public void reverseDecisionVariables(Variable[] variables){
+        for(int i = variables.length - 1; i >= 0; i--) decisionVariable(variables[i]);
+    }
 
     /**************************************************
      * ADD A CONSTRAINT TO THE MODEL (UNDER THE HOOD) *

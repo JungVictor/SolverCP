@@ -150,8 +150,8 @@ Cette classe dispose de 4 fonctions seulement.
 - `sequence` permettant de créer une suite arithmétique
 - `sum` cas particulier de `sequence` où l'opérateur est `+`.
 
-#### Sequence
-Pour créer une séquence, on passe 3 paramètres en entrée : un motif qui sera répété, un opérateur et le nombre d'élément 
+#### Suites
+Pour créer une suite, on passe 3 paramètres en entrée : un motif qui sera répété, un opérateur et le nombre d'élément 
 dans la suite. Par exemple, pour créer la suite `x[1] + x[2] + x[3]`, on écrit `sequence("var", "+", 3);` ou `sum("var", 3);`.
 L'expression générée est `(var_0 + (var_1 + var_2))`.  
 Il existe 2 tokens réservés pour parse les suites. Comme on vient de le voir, le premier token est `var`, et il représente une variable qui change 

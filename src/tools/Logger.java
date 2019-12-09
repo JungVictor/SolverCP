@@ -23,7 +23,7 @@ public class Logger {
     }
 
     public static void lnprint(final String s){
-        println("\n"+s);
+        print("\n"+s);
     }
 
     public static void println(final String s){
