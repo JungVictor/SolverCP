@@ -190,6 +190,11 @@ public class ExpressionParser {
         }
     }
 
+    public String replace(String expr, int... constants){
+        for(int c : constants) expr = expr.replaceFirst("%c", c+"");
+        return expr;
+    }
+
     /**
      * Given a mathematical expression (comparison), output the real Expression.
      * @param expr Mathematical expression

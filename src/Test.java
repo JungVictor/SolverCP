@@ -9,7 +9,7 @@ public class Test {
         System.out.println(ExpressionBuilder.sequence("var + var", "+", 3));
         System.out.println(sum("var^2 + x", 3));
 
-        System.out.println(ExpressionBuilder.create("1*1 < 5"));
+        System.out.println(ExpressionBuilder.create("%c*%c < 5", 2, 2));
 
         /*
         Model model = new Model();

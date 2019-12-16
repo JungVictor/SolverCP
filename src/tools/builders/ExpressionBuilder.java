@@ -14,6 +14,14 @@ public class ExpressionBuilder {
         return parser.parse(expression);
     }
 
+    static public Expression create(String expression, int... constants){
+        return parser.parse(replace(expression, constants));
+    }
+
+    static public String replace(String expression, int... constants){
+        return parser.replace(expression, constants);
+    }
+
     static public Expression create_arith(String expression){
         return parser.parse_arith(expression);
     }

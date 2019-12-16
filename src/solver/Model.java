@@ -61,29 +61,57 @@ public class Model {
         this.objective = new Objective();
 
         this.clock = Clock.systemDefaultZone();
-        construction = clock.millis();
     }
 
 
+    /**
+     * Set the filter used by the solver
+     * @param filter
+     */
     public void setFilter(int filter){
         this.filter = filter;
     }
+
+    /**
+     * Set the filter used by the solver
+     * @param filter
+     */
     public void setFilter(String filter){
         this.filter = Constraint.toInt(filter);
     }
 
+    /**
+     * Add a new objective function that minimize the expression given with the variables binded
+     * @param expression
+     * @param variables
+     */
     public void minimize(Expression expression, Variable... variables){
         objective.minimize(expression, variables);
     }
 
+    /**
+     * Add a new objective function that minimize the expression given with the variables binded
+     * @param expression
+     * @param variables
+     */
     public void minimize(String expression, Variable... variables){
         objective.minimize(ExpressionBuilder.create_arith(expression), variables);
     }
 
+    /**
+     * Add a new objective function that maximize the expression given with the variables binded
+     * @param expression
+     * @param variables
+     */
     public void maximize(Expression expression, Variable... variables){
         objective.maximize(expression, variables);
     }
 
+    /**
+     * Add a new objective function that maximize the expression given with the variables binded
+     * @param expression
+     * @param variables
+     */
     public void maximize(String expression, Variable... variables){
         objective.maximize(ExpressionBuilder.create_arith(expression), variables);
     }
@@ -155,21 +183,32 @@ public class Model {
         return addVariables(n, new Domain(values));
     }
 
-    // TODO : comment
+    /**
+     * Add a variable to the list of variables for which we decide a value during the solving.
+     * @param v
+     */
     public void decisionVariable(Variable v){
         this.decisionVariables.add(v);
     }
+
+    /**
+     * Add variables to the list of variables for which we decide a value during the solving.
+     * @param variables
+     */
     public void decisionVariables(Variable[] variables){
         Collections.addAll(decisionVariables, variables);
-    }
-    public void reverseDecisionVariables(Variable[] variables){
-        for(int i = variables.length - 1; i >= 0; i--) decisionVariable(variables[i]);
     }
 
     /**************************************************
      * ADD A CONSTRAINT TO THE MODEL (UNDER THE HOOD) *
      **************************************************/
 
+    /**
+     * Get an expression corresponding to the expression given in string.
+     * Tries to search in already existing expression before creating a new one.
+     * @param expression
+     * @return
+     */
     private Expression getExpression(final String expression){
         if(expressions.containsKey(expression)) return expressions.get(expression);
         final Expression e = ExpressionBuilder.create(expression);
@@ -177,24 +216,49 @@ public class Model {
         return e;
     }
 
-    public void addConstraint(String expression, Variable... variables){
+    /**
+     * Add a constraint corresponding to the given expression between the set of variables
+     * @param expression
+     * @param variables
+     */
+    public void addConstraint(final String expression, Variable... variables){
         if(variables.length == 0) return;
         if(variables.length == 1) addUnaryConstraint(getExpression(expression), variables[0]);
         else if(variables.length == 2) addBinaryConstraint(getExpression(expression), variables[0], variables[1]);
         else addNaryConstraint(getExpression(expression), variables);
     }
 
+    public void addConstraint(String expression, int[] constants, Variable... variables){
+        expression = ExpressionBuilder.replace(expression, constants);
+        addConstraint(expression, variables);
+    }
+
+    /**
+     * Add a allDifferent constraint between the set of variables
+     * @param variables
+     */
     public void allDifferent(Variable... variables){
         for(int i = 0; i < variables.length; i++)
             for(int j = i+1; j < variables.length; j++)
                 addConstraint("x != y", variables[i], variables[j]);
     }
 
+    /**
+     * Add an unary constraint corresponding to the expression binding the variable v
+     * @param expression
+     * @param v
+     */
     private void addUnaryConstraint(Expression expression, Variable v){
         if(!unaryConstraints.containsKey(v)) unaryConstraints.put(v, new ArrayList<>());
         unaryConstraints.get(v).add(expression);
     }
 
+    /**
+     * Add a binary constraint corresponding to the expression binding the two variables x and y
+     * @param expression
+     * @param x
+     * @param y
+     */
     private void addBinaryConstraint(Expression expression, Variable x, Variable y){
         for(Couple couple : binaryConstraints) {
             if(couple.equals(x, y)) {
@@ -206,6 +270,11 @@ public class Model {
         this.binaryConstraints.add(couple);
     }
 
+    /**
+     * Add a n-ary constraint between the expression and a set of variable
+     * @param expression
+     * @param variables
+     */
     private void addNaryConstraint(Expression expression, Variable... variables){
         for(NCouple couple : naryConstraints){
             if(couple.equals(variables)){
@@ -229,6 +298,9 @@ public class Model {
         return ConstraintBuilder.constraint(x, y, table, 0);
     }
 
+    /**
+     * Evaluate the expression, building the tables and constraints
+     */
     private void build(){
         // Unary constraints (=> domain filtering)
         for(Variable v : unaryConstraints.keySet())
@@ -280,6 +352,7 @@ public class Model {
         NSOLUTIONS = 0;
         int index = 0;
 
+        construction = clock.millis();
         build();
 
         if(decisionVariables.size() == 0) decisionVariables = allVariables;
@@ -345,22 +418,42 @@ public class Model {
      * RESULTS AND INFORMATIONS *
      ****************************/
 
+    /**
+     * Get the number of backtrack
+     * @return
+     */
     public int getBacktracks(){
         return BACKTRACKS;
     }
 
+    /**
+     * Get the number of fails
+     * @return
+     */
     public int getFails(){
         return FAILS;
     }
 
+    /**
+     * Get the number of solution
+     * @return
+     */
     public int getNSolutions(){
         return NSOLUTIONS;
     }
 
+    /**
+     * Get the status of the solver (there exists a solution or not)
+     * @return
+     */
     public boolean status(){
         return this.status;
     }
 
+    /**
+     * All the stats
+     * @return
+     */
     public String stats(){
         String stats = "Building (s) : " + construction/1000.0;
         stats += "\nExecution (s) : " + time/1000.0;
@@ -378,18 +471,30 @@ public class Model {
         return stats+"\n";
     }
 
+    /**
+     * Add a solution to the pool of solutions
+     * @return
+     */
     private int[] solution(){
         int[] solution = new int[decisionVariables.size()];
         for(int i = 0; i < decisionVariables.size(); i++) solution[i] = decisionVariables.get(i).getDomain().getValue(0);
         return solution;
     }
 
+    /**
+     * Get all the solutions stored by the solver
+     * @return
+     */
     public int[][] solutions(){
         int[][] solutions = new int[this.solutions.size()][];
         for(int s = 0; s < this.solutions.size(); s++) solutions[s] = this.solutions.get(s);
         return solutions;
     }
 
+    /**
+     * Get the best solution, if available (there is an objective)
+     * @return
+     */
     public int[] best(){
         if(objective != null) return objective.getBestSolution();
         return this.solutions.get(0);

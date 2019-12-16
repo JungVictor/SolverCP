@@ -1,4 +1,4 @@
-# Solveur PPC
+# miniCP
 Le but est d'implémenter un solveur de programmation par contraintes qui soit fonctionnel. Est-il optimisé ? Non. Mais il est facile à utiliser.  
 La première partie va porter sur comment utiliser le solveur, et la deuxième partie sur l'implémentation de celui-ci. 
 Je vais parler très brièvement des choix que j'ai fait et pourquoi, ainsi que des difficultés rencontrées 
@@ -172,3 +172,131 @@ Comme pour les Expressions, il faudra s'assurer de passer le bon nombre de valeu
 
 ## II. Implémentation
 
+### 1. Le domaine
+Le domaine est implémenté sous la forme d'un **ensemble réversible non-ordonné**. A l'échelle de ce solveur, conserver
+l'ordre des valeurs me semble peu important. Le seul moment où il semble intéressant de conserver l'ordre est lors
+du choix de l'affectation d'une valeur à une variable. En effet, conserver l'ordre permettrait de savoir quelle valeur
+n'a pas déjà été affecté à l'aide d'un simple entier (pointeur), qui pointerait l'index de la dernière valeur affectée.
+Les seules opérations seraient l'incrémentation et la remise à zero. En choisissant de ne pas conserver l'ordre, il faut
+alors conserver la liste des valeurs qui ont déjà été affectées (O(n) en mémoire, n taille du domaine) et tester lors
+de chaque nouvelle affectation si la valeur n'a pas déjà été affecté (O(n²) en temps, n taille du domaine). On gagne de
+la complexité lors de la restauration du domaine, mais on en perd lors de l'affectation d'une variable. A priori, on fait
+souvent plus de restaurations que d'affectations, ce qui a motivé mon choix. L'idéal serait d'implémenter les deux et de
+tester lequel est plus rapide.
+
+### 2. Le delta
+Le delta est un simple tableau d'éléments. On dispose d'un pointeur pour connaître la fin du tableau, et c'est tout.
+Les seules opérations réelles sont l'incrémentation et la décrémentation du pointeur, et l'affectation d'un élement du 
+tableau à un nouvel entier. Pour ce solveur, pas besoin de plus.
+
+### 3. Contraintes, tables et expressions
+Dans ce solveur, toute contrainte est **binaire**. Cependant, il peut arriver que certaines contraintes doivent lier plus
+de deux variables : dans ce cas, on créer une nouvelle "fausse" variable permettant de faire le lien entre les autres
+variables.
+
+| x | y | z | N |
+|---|---|---|---|
+| 0 | 1 | 1 | 0 |
+| 0 | 1 | 2 | 1 |
+| 1 | 2 | 1 | 2 |
+|...|...|...|...|
+| 8 | 8 | 8 | n |
+
+On créer ensuite les contraintes binaires (x, N), (y, N) et (z, N).
+
+#### Construction des tables et évaluation retardée
+Comme je l'ai montré plus haut, l'ajout de contraintes se fait par un objet de type Expression. En réalité, toutes les
+expressions sont stockées et leur évaluation est retardée jusqu'au lancement du solveur.  
+Les expressions sont stockées en fonction de leur arité : les expressions unaires sont dans une map <Variable, List<Expressions>>,
+les expressions binaires sont dans un set de Couple (en réalité : deux variables + une liste d'expressions) et les
+expressions n-aires sont dans un set de NCouple (en réalité : n-variables + une liste d'expressions).  
+
+Pourquoi faire ça ? Tout simplement pour simplifier les intersections de contraintes. Si je pose une contrainte entre deux 
+variables, et une deuxième entre ces deux variables, alors je veux en réalité qu'une seule table, c'est-à-dire une
+seule contrainte (qui est l'intersection de ces deux contraintes). En retardant l'évaluation et la création des tables,
+je m'assure qu'on dispose de toutes les contraintes et que tous les couples générés répondent à toutes les contraintes
+(ce qui représente un gain en mémoire ET en temps).
+
+Ainsi, écrire les contraintes `x > y` et `y < x` ne génère qu'une seule table, comme on est en mesure de l'attendre.
+Dans un cas général, poser les contraintes C1, C2 et C3 entre x et y revient à poser la contrainte C1 /\ C2 /\ C3.
+De plus, poser une contrainte entre x et y est équivalent à poser une contrainte entre y et x.
+
+#### Tables
+Les tables sont implémentées sous forme d'une table de hachage, ce qui permet d'accéder plus rapidement aux tuples valides.
+Afin de trouver un compromis espace/temps, la table de hash est uniquement dans le sens x -> y. Pour trouver les tuples (x, ...) valides,
+c'est en O(1). Pour trouver les tuples (y, ...) valides, c'est en O(n).  
+Petit gain possible lors de l'AC6 en mémorisant uniquement la liste des supports de y, étant donné que l'accès aux tuples
+valides de x est plus rapide.
+
+### 4. Supports
+#### AC4 et AC6
+Dans le cas de l'AC4 et l'AC6, la liste des supports est implémentée à l'aide d'un ensemble réversible non-ordonné.
+Contrairement au domaine où un ensemble ordonné peut avoir son intérêt (puisqu'on veut savoir quelles valeurs ont déjà
+été étudiées), ici on ne s'intéresse qu'au cas où une valeur n'a plus de support, c'est-à-dire qu'on s'intéresse seulement
+à la taille de la liste de support. Le fait que la liste des supports soit ordonnée ou pas ne fait pas gagner de temps,
+mais le fait qu'elle ne soit pas ordonnée est un gain de temps lors de la restauration de l'état.
+
+#### AC2001
+Dans le cas de l'AC2001, ce n'est plus une liste de supports mais simplement un seul support par valeur. Pour gagner du
+temps, lorsqu'une valeur n'a plus de support, je garde tout de même en mémoire l'ancien support tout en supprimant
+la valeur du domaine. Ainsi, plus besoin de restaurer l'état, puisque si un support est valide à l'étape i+1, alors il 
+est valide à l'étape i. Comme j'effectue l'itération sur les domaines, le fait de garder en mémoire un support n'est pas
+grave puisque la valeur n'existe plus dans le domaine (et ne sera donc pas prise en compte lors de la propagation).
+Cela permet de gratter un peu de complexité en temps et en espace (puisque je n'ai pas à sauvegarder les états précédents).
+
+## III. Benchmarks, tests et explications
+### 1. N-Queens
+_Tests  réalisés pour N = 12._  
+
+| Filter | Building time (ms) | Execution time (s) | Ranking |
+|--------|--------------------|--------------------|---------|
+| AC3    | 18                 | 2.23               |    2    |
+| AC4    | 43                 | 2.42               |    4    |
+| AC6    | 26                 | 2.307              |    3    |
+| AC2001 | 18                 | 2.132              |    1    |
+
+_Tests  réalisés pour N = 14._   
+
+| Filter | Building time (ms) | Execution time (s) | Ranking |
+|--------|--------------------|--------------------|---------|
+| AC3    | 40                 | 62.229             |    2    |
+| AC4    | 48                 | 65.937             |    3    |
+| AC6    | 42                 | 65.971             |    4    |
+| AC2001 | 40                 | 53.498             |    1    |
+
+#### Pourquoi AC4 et AC6 sont-ils plus lent qu'AC3 ?
+Il y a à priori deux explications : soit j'ai raté l'implémentation d'AC4 et d'AC6, soit le modèle ne se prête pas bien
+à ces deux filtrages (ou : les deux en même temps). En effet, si l'on passe plus de temps à faire de la restauration
+qu'à faire du filtrage, alors AC4 et AC6 ne sont pas très adaptés au modèle. Pour savoir s'il s'agit réellement d'un 
+problème de modèle, nous allons effectuer des tests sur un autre modèle.
+
+### 2. Golomb Ruler
+
+_Tests  réalisés pour N = 7, UB = 30._  
+
+| Filter | Building time (ms) | Execution time (s) | Ranking |
+|--------|--------------------|--------------------|---------|
+| AC3    | 324                | 3.315              |    4    |
+| AC4    | 397                | 2.707              |    2    |
+| AC6    | 383                | 3.204              |    3    |
+| AC2001 | 327                | 2.383              |    1    |
+
+_Tests  réalisés pour N = 8, UB = 40._  
+
+| Filter | Building time (ms) | Execution time (s) | Ranking |
+|--------|--------------------|--------------------|---------|
+| AC3    | 443                | 29.045             |    4    |
+| AC4    | 482                | 28.591             |    2    |
+| AC6    | 504                | 28.72              |    3    |
+| AC2001 | 455                | 27.81              |    1    |
+
+Comme on le voit, AC3 est le pire filtrage possible pour résoudre le Golomb Ruler ; comme je le soupçonnais, il y a bien
+une histoire de modèle adapté à certains filtrages.
+
+### 3. Analyse des résultats
+Clairement, AC2001 semble être un bon compromis temps/mémoire. Il se classe n°1 dans les deux modèles, pour les deux
+configurations testées. Étant donné qu'il s'agit d'un AC3 avec une petite mémoire, il est d'ailleurs normal (ou du moins
+attendu) qu'il soit meilleur.  
+Concernant le cas de l'AC4 et de l'AC6, on voit qu'ils prennent beaucoup de temps lors de la restauration des supports
+(comme le montre les résultats du N-Queens). Malgré ceci, on voit que pour des problèmes plus complexes, la complexité - 
+en négligeant la restauration - est meilleure (comme le montre les résultats du GolombRuler).
